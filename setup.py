@@ -6,5 +6,6 @@ setuptools.setup(
     author='Pramod Kumar',
     author_email='pramodkumar.damam73@gmail.com',
     description='Make your classes from/to dict',
-    url='https://github.com/pskd73/dictable.git'
+    url='https://github.com/pskd73/dictable.git',
+    packages=setuptools.find_packages()
 )
