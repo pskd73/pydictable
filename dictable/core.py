@@ -10,7 +10,7 @@ class Field:
         pass
 
 
-class StringField(Field):
+class StrField(Field):
     def get_type(self):
         return str
 
@@ -47,19 +47,19 @@ class DictAble:
         for attr in dir(obj_cls):
             if attr in d:
                 field: Field = obj_cls.__getattribute__(obj, attr)
-                if field.get_type() in PRIMITIVE_TYPES:
-                    obj.__setattr__(attr, d[attr])
-                elif isinstance(field, ListField):
-                    tmp_list = []
-                    for e in d[attr]:
-                        sub_obj = field.obj_type()
-                        DictAble.__apply_dict(sub_obj, e)
-                        tmp_list.append(sub_obj)
-                    obj.__setattr__(attr, tmp_list)
-                elif isinstance(field, ObjectField):
-                    sub_obj = field.get_type()()
-                    obj.__setattr__(attr, sub_obj)
-                    DictAble.__apply_dict(sub_obj, d[attr])
+                obj.__setattr__(attr, DictAble.__get_field_value(field, d[attr]))
+
+    @staticmethod
+    def __get_field_value(field, v):
+        if field.get_type() in PRIMITIVE_TYPES:
+            return v
+        if isinstance(field, ListField):
+            tmp_list = []
+            for e in v:
+                tmp_list.append(DictAble.__get_field_value(field.obj_type, e))
+            return tmp_list
+        if isinstance(field, ObjectField):
+            return field.get_type()(v)
 
     @staticmethod
     def __to_json(v):
