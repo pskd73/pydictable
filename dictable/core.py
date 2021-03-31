@@ -118,9 +118,11 @@ class CustomField(Field):
 
 
 class MultiTypeField(CustomField):
+    TYPE_KEY = '__type'
+
     def __init__(self, types: List[Type[DictAble]]):
         types_dict = {t.__name__: t for t in types}
         super(MultiTypeField, self).__init__(
-            lambda d: types_dict[d['__type']](dict=d),
-            lambda o: {**o.to_json(), '__type': o.__class__.__name__}
+            lambda d: types_dict[d[self.TYPE_KEY]](dict=d),
+            lambda o: {**o.to_json(), self.TYPE_KEY: o.__class__.__name__}
         )
