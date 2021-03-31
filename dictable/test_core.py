@@ -108,3 +108,14 @@ class TestCore(TestCase):
 
         a = Address(**{'created_at': 1617129000000})
         self.assertEqual(a.created_at, datetime(2021, 3, 31))
+
+    def test_inheritance(self):
+        class LivingOrgan(DictAble):
+            no_of_hearts: int = IntField()
+
+        class Human(LivingOrgan):
+            hand_size: int = IntField()
+
+        h = Human(**{'no_of_hearts': 1, 'hand_size': 30})
+        self.assertEqual(h.no_of_hearts, 1)
+        self.assertEqual(h.hand_size, 30)
