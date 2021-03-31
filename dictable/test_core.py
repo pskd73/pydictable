@@ -140,9 +140,9 @@ class TestCore(TestCase):
             b_field: str = StrField()
 
         def make_car(car_dict: dict) -> Car:
-            if car_dict['type'] == 'CarA':
+            if car_dict['__type'] == 'CarA':
                 return CarA(dict=car_dict)
-            if car_dict['type'] == 'CarB':
+            if car_dict['__type'] == 'CarB':
                 return CarB(dict=car_dict)
 
         class Garage(DictAble):
@@ -150,20 +150,20 @@ class TestCore(TestCase):
 
         g = Garage(dict={
             'cars': [
-                {'type': 'CarA', 'a_field': 'a field', 'name': 'WagonR'},
-                {'type': 'CarB', 'b_field': 'b field', 'name': 'I20'}
+                {'__type': 'CarA', 'a_field': 'a field', 'name': 'WagonR'},
+                {'__type': 'CarB', 'b_field': 'b field', 'name': 'I20'}
             ]
         })
         self.assertEqual(g.to_json()['cars'][0]['name'], 'WagonR')
         self.assertEqual(g.to_json()['cars'][1]['name'], 'I20')
 
         class Garage(DictAble):
-            cars: List[Car] = ListField(MultiTypeField('type', {'CarA': CarA, 'CarB': CarB}))
+            cars: List[Car] = ListField(MultiTypeField([CarA, CarB]))
 
         g = Garage(dict={
             'cars': [
-                {'type': 'CarA', 'a_field': 'a field', 'name': 'I10'},
-                {'type': 'CarB', 'b_field': 'b field', 'name': 'Mini'}
+                {'__type': 'CarA', 'a_field': 'a field', 'name': 'I10'},
+                {'__type': 'CarB', 'b_field': 'b field', 'name': 'Mini'}
             ]
         })
         self.assertEqual(g.to_json()['cars'][0]['name'], 'I10')

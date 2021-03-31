@@ -1,7 +1,7 @@
 import inspect
 from abc import abstractmethod
 from datetime import datetime
-from typing import Dict, Type
+from typing import Dict, Type, List
 
 
 class Field:
@@ -118,8 +118,9 @@ class CustomField(Field):
 
 
 class MultiTypeField(CustomField):
-    def __init__(self, type_field: str, types: dict):
+    def __init__(self, types: List[Type[DictAble]]):
+        types_dict = {t.__name__: t for t in types}
         super(MultiTypeField, self).__init__(
-            lambda d: types[d[type_field]](dict=d),
-            lambda o: o.to_json()
+            lambda d: types_dict[d['__type']](dict=d),
+            lambda o: {**o.to_json(), '__type': o.__class__.__name__}
         )
