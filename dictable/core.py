@@ -1,8 +1,6 @@
 import inspect
 from abc import abstractmethod
-from typing import List, Dict
-
-PRIMITIVE_TYPES = [int, str, float, bool]
+from typing import Dict, Type
 
 
 class Field:
@@ -10,31 +8,13 @@ class Field:
     def get_type(self):
         pass
 
+    @abstractmethod
+    def from_json(self, v):
+        pass
 
-class StrField(Field):
-    def get_type(self):
-        return str
-
-
-class IntField(Field):
-    def get_type(self):
-        return int
-
-
-class ObjectField(Field):
-    def __init__(self, obj_type):
-        self.obj_type = obj_type
-
-    def get_type(self):
-        return self.obj_type
-
-
-class ListField(Field):
-    def __init__(self, obj_type):
-        self.obj_type = obj_type
-
-    def get_type(self):
-        return list
+    @abstractmethod
+    def to_json(self, v):
+        pass
 
 
 class DictAble:
@@ -54,39 +34,61 @@ class DictAble:
     @staticmethod
     def __apply_dict(obj, d: dict):
         for attr, field in DictAble.__get_fields(obj).items():
-            obj.__setattr__(attr, DictAble.__get_field_value(field, d.get(attr)))
-
-    @staticmethod
-    def __get_field_value(field: Field, v):
-        if v is None:
-            return None
-        if field.get_type() in PRIMITIVE_TYPES:
-            return v
-        if isinstance(field, ListField):
-            tmp_list = []
-            for e in v:
-                tmp_list.append(DictAble.__get_field_value(field.obj_type, e))
-            return tmp_list
-        if isinstance(field, ObjectField):
-            return field.get_type()(v)
-
-    @staticmethod
-    def __to_json(v):
-        if type(v) in PRIMITIVE_TYPES:
-            return v
-        if isinstance(v, DictAble):
-            return v.to_json()
-        if type(v) is dict:
-            ret = {}
-            for k, v in v.items():
-                ret[k] = DictAble.__to_json(v)
-            return ret
-        if type(v) is list:
-            ret = []
-            for e in v:
-                ret.append(DictAble.__to_json(e))
-            return ret
-        raise NotImplementedError()
+            obj.__setattr__(attr, field.from_json(d.get(attr)))
 
     def to_json(self) -> dict:
-        return self.__to_json(self.__dict__)
+        return {attr: field.to_json(self.__getattribute__(attr)) for attr, field in self.__get_fields(self).items()}
+
+
+class StrField(Field):
+    def from_json(self, v: str):
+        return v
+
+    def to_json(self, v):
+        return v
+
+    def get_type(self):
+        return str
+
+
+class IntField(Field):
+    def from_json(self, v: int):
+        return v
+
+    def to_json(self, v):
+        return v
+
+    def get_type(self):
+        return int
+
+
+class ObjectField(Field):
+    def __init__(self, obj_type: Type[DictAble]):
+        self.obj_type = obj_type
+
+    def from_json(self, v):
+        if v is None:
+            return None
+        return self.obj_type(v)
+
+    def to_json(self, v):
+        return v.to_json()
+
+    def get_type(self):
+        return self.obj_type
+
+
+class ListField(Field):
+    def __init__(self, obj_type: Field):
+        self.obj_type = obj_type
+
+    def from_json(self, v):
+        if v is None:
+            return None
+        return [self.obj_type.from_json(e) for e in v]
+
+    def to_json(self, v):
+        return [self.obj_type.to_json(e) for e in v]
+
+    def get_type(self):
+        return list
