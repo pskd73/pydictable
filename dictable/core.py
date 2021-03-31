@@ -21,7 +21,11 @@ class Field:
 class DictAble:
     def __init__(self, *args, **kwargs):
         self.__apply_dict(self, {})
-        self.__apply_dict(self, kwargs)
+        for k, v in kwargs.items():
+            if k in self.__get_fields(self):
+                self.__setattr__(k, v)
+        if kwargs.get('dict'):
+            self.__apply_dict(self, kwargs['dict'])
         if len(args) > 0:
             raise ReferenceError('Use kwargs to init DictAble')
 
@@ -95,7 +99,7 @@ class ObjectField(Field):
     def from_json(self, v):
         if v is None:
             return None
-        return self.obj_type(**v)
+        return self.obj_type(dict=v)
 
     def to_json(self, v):
         return v.to_json()
