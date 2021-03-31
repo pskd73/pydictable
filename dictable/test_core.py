@@ -1,9 +1,10 @@
 import json
 from collections import OrderedDict
+from datetime import datetime
 from typing import List
 from unittest import TestCase
 
-from dictable.core import DictAble, StrField, IntField, ObjectField, ListField
+from dictable.core import DictAble, StrField, IntField, ObjectField, ListField, DatetimeField
 
 
 class TestCore(TestCase):
@@ -95,3 +96,15 @@ class TestCore(TestCase):
 
         a = Address(pin_code=518466)
         self.assertEqual(a.pin_code, 518466)
+
+    def test_datetime_field(self):
+        class Address(DictAble):
+            pin_code: int = IntField()
+            created_at: datetime = DatetimeField()
+
+        a = Address()
+        a.created_at = datetime(2021, 3, 31)
+        self.assertEqual(a.to_json()['created_at'], 1617129000000)
+
+        a = Address(**{'created_at': 1617129000000})
+        self.assertEqual(a.created_at, datetime(2021, 3, 31))

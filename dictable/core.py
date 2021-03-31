@@ -1,5 +1,6 @@
 import inspect
 from abc import abstractmethod
+from datetime import datetime
 from typing import Dict, Type
 
 
@@ -72,6 +73,19 @@ class FloatField(Field):
 
     def to_json(self, v):
         return v
+
+
+class DatetimeField(Field):
+    def get_type(self):
+        return datetime
+
+    def from_json(self, v: int):
+        if v is None:
+            return None
+        return datetime.fromtimestamp(v / 1000)
+
+    def to_json(self, v: datetime):
+        return int(v.timestamp() * 1000)
 
 
 class ObjectField(Field):
