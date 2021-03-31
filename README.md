@@ -1,4 +1,4 @@
-# dictable
+# pydictable
 Make your classes json serializable and deserializable. It supports **from dict** and **to dict** with proper **attribute hints**. Best usecase would be
 
 1. Let us say you store json in s3. When you fetch it, you want it to be an object instead of a dict.
@@ -7,9 +7,7 @@ Make your classes json serializable and deserializable. It supports **from dict*
 NamedTuple would come handy in this situation, but as it is tuple, it is immutable. You can do these two operations easily with DictAble.
 
 ### Example:
-```python
-from dictable.core import DictAble, StrField, IntField, ObjectField, ListField        
-
+```python 
 
 class LatLng(DictAble):
     lat: int = IntField()
