@@ -6,10 +6,6 @@ from typing import Dict, Type
 
 class Field:
     @abstractmethod
-    def get_type(self):
-        pass
-
-    @abstractmethod
     def from_json(self, v):
         pass
 
@@ -53,9 +49,6 @@ class StrField(Field):
     def to_json(self, v):
         return v
 
-    def get_type(self):
-        return str
-
 
 class IntField(Field):
     def from_json(self, v: int):
@@ -64,14 +57,8 @@ class IntField(Field):
     def to_json(self, v):
         return v
 
-    def get_type(self):
-        return int
-
 
 class FloatField(Field):
-    def get_type(self):
-        return float
-
     def from_json(self, v):
         return v
 
@@ -80,9 +67,6 @@ class FloatField(Field):
 
 
 class DatetimeField(Field):
-    def get_type(self):
-        return datetime
-
     def from_json(self, v: int):
         if v is None:
             return None
@@ -104,9 +88,6 @@ class ObjectField(Field):
     def to_json(self, v):
         return v.to_json()
 
-    def get_type(self):
-        return self.obj_type
-
 
 class ListField(Field):
     def __init__(self, obj_type: Field):
@@ -120,5 +101,25 @@ class ListField(Field):
     def to_json(self, v):
         return [self.obj_type.to_json(e) for e in v]
 
-    def get_type(self):
-        return list
+
+class CustomField(Field):
+    """
+    For advance usage
+    """
+    def __init__(self, from_json, to_json):
+        self._from_json = from_json
+        self._to_json = to_json
+
+    def from_json(self, v):
+        return self._from_json(v)
+
+    def to_json(self, v):
+        return self._to_json(v)
+
+
+class MultiTypeField(CustomField):
+    def __init__(self, type_field: str, types: dict):
+        super(MultiTypeField, self).__init__(
+            lambda d: types[d[type_field]](dict=d),
+            lambda o: o.to_json()
+        )

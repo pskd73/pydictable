@@ -4,7 +4,8 @@ from datetime import datetime
 from typing import List
 from unittest import TestCase
 
-from dictable.core import DictAble, StrField, IntField, ObjectField, ListField, DatetimeField
+from dictable.core import DictAble, StrField, IntField, ObjectField, ListField, DatetimeField, CustomField, \
+    MultiTypeField
 
 
 class TestCore(TestCase):
@@ -127,3 +128,43 @@ class TestCore(TestCase):
 
         a = Address(pin_code=560032, created_at=datetime(2021, 3, 31))
         self.assertEqual(a.to_json()['created_at'], 1617129000000)
+
+    def test_custom_field(self):
+        class Car(DictAble):
+            name: str = StrField()
+
+        class CarA(Car):
+            a_field: str = StrField()
+
+        class CarB(Car):
+            b_field: str = StrField()
+
+        def make_car(car_dict: dict) -> Car:
+            if car_dict['type'] == 'CarA':
+                return CarA(dict=car_dict)
+            if car_dict['type'] == 'CarB':
+                return CarB(dict=car_dict)
+
+        class Garage(DictAble):
+            cars: List[Car] = ListField(CustomField(make_car, lambda c: c.to_json()))
+
+        g = Garage(dict={
+            'cars': [
+                {'type': 'CarA', 'a_field': 'a field', 'name': 'WagonR'},
+                {'type': 'CarB', 'b_field': 'b field', 'name': 'I20'}
+            ]
+        })
+        self.assertEqual(g.to_json()['cars'][0]['name'], 'WagonR')
+        self.assertEqual(g.to_json()['cars'][1]['name'], 'I20')
+
+        class Garage(DictAble):
+            cars: List[Car] = ListField(MultiTypeField('type', {'CarA': CarA, 'CarB': CarB}))
+
+        g = Garage(dict={
+            'cars': [
+                {'type': 'CarA', 'a_field': 'a field', 'name': 'I10'},
+                {'type': 'CarB', 'b_field': 'b field', 'name': 'Mini'}
+            ]
+        })
+        self.assertEqual(g.to_json()['cars'][0]['name'], 'I10')
+        self.assertEqual(g.to_json()['cars'][1]['name'], 'Mini')
