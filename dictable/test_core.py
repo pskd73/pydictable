@@ -71,3 +71,20 @@ class TestCore(TestCase):
         self.assertEqual(p.address.lat_lng.lat, 12345)
         self.assertEqual(p.address.pin_code, 560032)
         self.assertDictEqual(p.to_json(), input_dict)
+
+    def test_default(self):
+        class Address(DictAble):
+            pin_code: int = IntField()
+
+        class Person(DictAble):
+            name: str = StrField()
+            address: Address = ObjectField(Address)
+
+        p = Person()
+        self.assertEqual(p.name, None)
+        self.assertEqual(p.address, None)
+
+        p = Person({'address': {}, 'name': 'Pramod'})
+        self.assertTrue(p.address is not None)
+        self.assertEqual(p.address.pin_code, None)
+        self.assertEqual(p.name, 'Pramod')

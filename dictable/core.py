@@ -1,5 +1,6 @@
+import inspect
 from abc import abstractmethod
-from typing import List
+from typing import List, Dict
 
 PRIMITIVE_TYPES = [int, str, float, bool]
 
@@ -38,19 +39,27 @@ class ListField(Field):
 
 class DictAble:
     def __init__(self, *args, **kwargs):
+        self.__apply_dict(self, {})
         if len(args) > 0:
             self.__apply_dict(self, args[0])
 
     @staticmethod
-    def __apply_dict(obj, d: dict):
-        obj_cls = obj.__class__
-        for attr in dir(obj_cls):
-            if attr in d:
-                field: Field = obj_cls.__getattribute__(obj, attr)
-                obj.__setattr__(attr, DictAble.__get_field_value(field, d[attr]))
+    def __get_fields(obj) -> Dict[str, Field]:
+        fields = {}
+        for attr in inspect.getmembers(obj.__class__):
+            if isinstance(attr[1], Field):
+                fields[attr[0]] = attr[1]
+        return fields
 
     @staticmethod
-    def __get_field_value(field, v):
+    def __apply_dict(obj, d: dict):
+        for attr, field in DictAble.__get_fields(obj).items():
+            obj.__setattr__(attr, DictAble.__get_field_value(field, d.get(attr)))
+
+    @staticmethod
+    def __get_field_value(field: Field, v):
+        if v is None:
+            return None
         if field.get_type() in PRIMITIVE_TYPES:
             return v
         if isinstance(field, ListField):
