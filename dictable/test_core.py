@@ -168,3 +168,10 @@ class TestCore(TestCase):
         })
         self.assertEqual(g.to_json()['cars'][0]['name'], 'I10')
         self.assertEqual(g.to_json()['cars'][1]['name'], 'Mini')
+
+        g = Garage(
+            cars=[
+                CarA(name='i20', a_field='some value')
+            ]
+        )
+        self.assertEqual(g.to_json()['cars'][0]['__type'], 'CarA')

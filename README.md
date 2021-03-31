@@ -34,7 +34,7 @@ input_dict = {
         }
     }
 }
-p = Person(input_dict)
+p = Person(dict=input_dict)
 p.name # Pramod
 p.address # Address object
 p.address.pin_code # 560032
@@ -42,6 +42,59 @@ p.address.pin_code # 560032
 p.to_json() == input_dict # Not order though!
 
 p.address.pin_code = 518466 # You can change the values
+
+# you can initiate with named params too
+p2 = Person(
+    name='Pramod',
+    address=Address(
+        pin_code=560032,
+        lat_lng=LatLng(
+            lat=12345,
+            lng=67890
+        )
+    )
+)
+p == p2 # shallow equal
+p2.to_json() == p.to_json()
+
+```
+
+### Fields
+##### StrField
+##### IntField
+##### FloatField
+##### DatetimeField
+##### ObjectField
+```
+__init__(self, obj_type: Type[DictAble])
+```
+##### ListField
+```
+__init__(self, obj_type: Field)
+```
+##### MultiTypeField
+```
+__init__(self, types: List[Type[DictAble]])
+```
+```python
+class Car(DictAble):
+    name: str = StrField()
+
+class CarA(Car):
+    a_field: str = StrField()
+
+class CarB(Car):
+    b_field: str = StrField()
+
+class Garage(DictAble):
+    cars: List[Car] = ListField(MultiTypeField([CarA, CarB]))
+
+g = Garage(
+    cars=[
+        CarA(name='i20', a_field='some value')
+    ]
+)
+g.to_json() # {'cars': [{'a_field': 'some value', 'name': 'i20', '__type': 'CarA'}]}
 ```
 
 It is still under development. Feel free to report bugs or push changes!
