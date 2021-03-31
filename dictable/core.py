@@ -63,6 +63,17 @@ class IntField(Field):
         return int
 
 
+class FloatField(Field):
+    def get_type(self):
+        return float
+
+    def from_json(self, v):
+        return v
+
+    def to_json(self, v):
+        return v
+
+
 class ObjectField(Field):
     def __init__(self, obj_type: Type[DictAble]):
         self.obj_type = obj_type
