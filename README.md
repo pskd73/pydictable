@@ -6,7 +6,12 @@ Make your classes json serializable and deserializable. It supports **from dict*
 
 NamedTuple would come handy in this situation, but as it is tuple, it is immutable. You can do these two operations easily with DictAble.
 
-### Example:
+### Installation
+```
+pip install pydictable
+```
+
+### Example
 ```python 
 
 class LatLng(DictAble):
