@@ -1,10 +1,9 @@
 import json
-from collections import OrderedDict
 from datetime import datetime
 from typing import List
 from unittest import TestCase
 
-from dictable.core import DictAble, StrField, IntField, ObjectField, ListField, DatetimeField, CustomField, \
+from pydictable.core import DictAble, StrField, IntField, ObjectField, ListField, DatetimeField, CustomField, \
     MultiTypeField
 
 
