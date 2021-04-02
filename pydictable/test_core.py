@@ -3,8 +3,8 @@ from datetime import datetime
 from typing import List
 from unittest import TestCase
 
-from pydictable.core import DictAble, StrField, IntField, ObjectField, ListField, DatetimeField, CustomField, \
-    MultiTypeField
+from pydictable.core import DictAble
+from pydictable.field import IntField, StrField, ListField, ObjectField, DatetimeField, CustomField, MultiTypeField
 
 
 class TestCore(TestCase):
