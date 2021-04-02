@@ -179,8 +179,8 @@ class TestCore(TestCase):
         class Car(DictAble):
             name: str = StrField(required=True)
 
-        try:
-            Car(dict={'name': None})
-        except ValueError:
-            pass
+        self.assertRaises(ValueError, lambda: Car(dict={'name': None}))
+        self.assertRaises(ValueError, lambda: Car(dict={}))
+        self.assertRaises(ValueError, lambda: Car(name=None))
+        self.assertRaises(ValueError, lambda: Car())
         Car(dict={'name': 'Pramod'})
