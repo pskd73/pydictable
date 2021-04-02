@@ -1,16 +1,30 @@
 import inspect
-from abc import abstractmethod
+from abc import abstractmethod, ABC
 from datetime import datetime
 from typing import Dict, Type, List
 
 
 class Field:
+    def __init__(self, required: bool=False):
+        self.required = required
+
+    def validate(self, field_name: str, v):
+        try:
+            self.validate_value(field_name, v)
+        except AssertionError:
+            if self.required and v is None:
+                raise ValueError('Invalid value {} for field {}'.format(v, field_name))
+
     @abstractmethod
     def from_json(self, v):
         pass
 
     @abstractmethod
     def to_json(self, v):
+        pass
+
+    @abstractmethod
+    def validate_value(self, field_name: str, v):
         pass
 
 
@@ -24,6 +38,7 @@ class DictAble:
             self.__apply_dict(self, kwargs['dict'])
         if len(args) > 0:
             raise ReferenceError('Use kwargs to init DictAble')
+        self.__validate()
 
     @staticmethod
     def __get_fields(obj) -> Dict[str, Field]:
@@ -38,6 +53,10 @@ class DictAble:
         for attr, field in DictAble.__get_fields(obj).items():
             obj.__setattr__(attr, field.from_json(d.get(attr)))
 
+    def __validate(self):
+        for attr, field in DictAble.__get_fields(self).items():
+            field.validate(attr, self.__getattribute__(attr))
+
     def to_json(self) -> dict:
         return {attr: field.to_json(self.__getattribute__(attr)) for attr, field in self.__get_fields(self).items()}
 
@@ -49,6 +68,9 @@ class StrField(Field):
     def to_json(self, v):
         return v
 
+    def validate_value(self, field_name: str, v):
+        assert type(v) == str
+
 
 class IntField(Field):
     def from_json(self, v: int):
@@ -57,6 +79,9 @@ class IntField(Field):
     def to_json(self, v):
         return v
 
+    def validate_value(self, field_name: str, v):
+        assert type(v) == int
+
 
 class FloatField(Field):
     def from_json(self, v):
@@ -64,6 +89,9 @@ class FloatField(Field):
 
     def to_json(self, v):
         return v
+
+    def validate_value(self, field_name: str, v):
+        assert type(v) == float
 
 
 class DatetimeField(Field):
@@ -75,9 +103,13 @@ class DatetimeField(Field):
     def to_json(self, v: datetime):
         return int(v.timestamp() * 1000)
 
+    def validate_value(self, field_name: str, v):
+        return type(v) == datetime
+
 
 class ObjectField(Field):
-    def __init__(self, obj_type: Type[DictAble]):
+    def __init__(self, obj_type: Type[DictAble], required: bool=False):
+        super(ObjectField, self).__init__(required=required)
         self.obj_type = obj_type
 
     def from_json(self, v):
@@ -88,9 +120,13 @@ class ObjectField(Field):
     def to_json(self, v):
         return v.to_json()
 
+    def validate_value(self, field_name: str, v):
+        assert isinstance(v, DictAble)
+
 
 class ListField(Field):
-    def __init__(self, obj_type: Field):
+    def __init__(self, obj_type: Field, required: bool=False):
+        super(ListField, self).__init__(required=required)
         self.obj_type = obj_type
 
     def from_json(self, v):
@@ -101,12 +137,16 @@ class ListField(Field):
     def to_json(self, v):
         return [self.obj_type.to_json(e) for e in v]
 
+    def validate_value(self, field_name: str, v):
+        assert type(v) == list and False not in set([self.obj_type.validate(field_name, e) for e in v])
 
-class CustomField(Field):
+
+class CustomField(Field, ABC):
     """
     For advance usage
     """
-    def __init__(self, from_json, to_json):
+    def __init__(self, from_json, to_json, required: bool=False):
+        super(CustomField, self).__init__(required=required)
         self._from_json = from_json
         self._to_json = to_json
 
@@ -120,9 +160,13 @@ class CustomField(Field):
 class MultiTypeField(CustomField):
     TYPE_KEY = '__type'
 
-    def __init__(self, types: List[Type[DictAble]]):
-        types_dict = {t.__name__: t for t in types}
+    def __init__(self, types: List[Type[DictAble]], required: bool=False):
+        self.types_dict = {t.__name__: t for t in types}
         super(MultiTypeField, self).__init__(
-            lambda d: types_dict[d[self.TYPE_KEY]](dict=d),
-            lambda o: {**o.to_json(), self.TYPE_KEY: o.__class__.__name__}
+            lambda d: self.types_dict[d[self.TYPE_KEY]](dict=d),
+            lambda o: {**o.to_json(), self.TYPE_KEY: o.__class__.__name__},
+            required=required
         )
+
+    def validate_value(self, field_name: str, v):
+        assert v.__class__.__name__ in self.types_dict
