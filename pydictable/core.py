@@ -8,12 +8,12 @@ class Field:
     def __init__(self, required: bool=False):
         self.required = required
 
-    def validate(self, v):
+    def validate(self, field_name: str, v):
         try:
-            self.validate_value(v)
+            self.validate_value(field_name, v)
         except AssertionError:
             if self.required and v is None:
-                raise ValueError('Invalid value {} for field {}'.format(v, self.__class__.__name__))
+                raise ValueError('Invalid value {} for field {}'.format(v, field_name))
 
     @abstractmethod
     def from_json(self, v):
@@ -24,7 +24,7 @@ class Field:
         pass
 
     @abstractmethod
-    def validate_value(self, v):
+    def validate_value(self, field_name: str, v):
         pass
 
 
@@ -55,7 +55,7 @@ class DictAble:
 
     def __validate(self):
         for attr, field in DictAble.__get_fields(self).items():
-            field.validate(self.__getattribute__(attr))
+            field.validate(attr, self.__getattribute__(attr))
 
     def to_json(self) -> dict:
         return {attr: field.to_json(self.__getattribute__(attr)) for attr, field in self.__get_fields(self).items()}
@@ -68,7 +68,7 @@ class StrField(Field):
     def to_json(self, v):
         return v
 
-    def validate_value(self, v):
+    def validate_value(self, field_name: str, v):
         assert type(v) == str
 
 
@@ -79,7 +79,7 @@ class IntField(Field):
     def to_json(self, v):
         return v
 
-    def validate_value(self, v):
+    def validate_value(self, field_name: str, v):
         assert type(v) == int
 
 
@@ -90,7 +90,7 @@ class FloatField(Field):
     def to_json(self, v):
         return v
 
-    def validate_value(self, v):
+    def validate_value(self, field_name: str, v):
         assert type(v) == float
 
 
@@ -103,7 +103,7 @@ class DatetimeField(Field):
     def to_json(self, v: datetime):
         return int(v.timestamp() * 1000)
 
-    def validate_value(self, v):
+    def validate_value(self, field_name: str, v):
         return type(v) == datetime
 
 
@@ -120,7 +120,7 @@ class ObjectField(Field):
     def to_json(self, v):
         return v.to_json()
 
-    def validate_value(self, v):
+    def validate_value(self, field_name: str, v):
         assert isinstance(v, DictAble)
 
 
@@ -137,8 +137,8 @@ class ListField(Field):
     def to_json(self, v):
         return [self.obj_type.to_json(e) for e in v]
 
-    def validate_value(self, v):
-        assert type(v) == list and False not in set([self.obj_type.validate(e) for e in v])
+    def validate_value(self, field_name: str, v):
+        assert type(v) == list and False not in set([self.obj_type.validate(field_name, e) for e in v])
 
 
 class CustomField(Field, ABC):
@@ -168,5 +168,5 @@ class MultiTypeField(CustomField):
             required=required
         )
 
-    def validate_value(self, v):
+    def validate_value(self, field_name: str, v):
         assert v.__class__.__name__ in self.types_dict

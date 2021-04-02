@@ -184,3 +184,10 @@ class TestCore(TestCase):
         self.assertRaises(ValueError, lambda: Car(name=None))
         self.assertRaises(ValueError, lambda: Car())
         Car(dict={'name': 'Pramod'})
+
+        class Car(DictAble):
+            no_of_gears: int = IntField(required=True)
+        try:
+            Car()
+        except ValueError as e:
+            self.assertTrue('no_of_gears' in str(e))
