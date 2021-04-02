@@ -6,12 +6,12 @@ Make your classes json serializable and deserializable. It supports **from dict*
 
 NamedTuple would come handy in this situation, but as it is tuple, it is immutable. You can do these two operations easily with DictAble.
 
-### Installation
+### 💾 Installation
 ```
 pip install pydictable
 ```
 
-### Example
+### 💡 Example
 ```python 
 
 class LatLng(DictAble):
@@ -62,7 +62,7 @@ p2.to_json() == p.to_json()
 
 ```
 
-### Fields
+### 📜 Fields
 ##### StrField
 ##### IntField
 ##### FloatField
@@ -100,4 +100,4 @@ g = Garage(
 g.to_json() # {'cars': [{'a_field': 'some value', 'name': 'i20', '__type': 'CarA'}]}
 ```
 
-It is still under development. Feel free to report bugs or push changes!
+It is still under development. Feel free to report bugs or push changes! Cheers!
