@@ -100,4 +100,4 @@ g = Garage(
 g.to_json() # {'cars': [{'a_field': 'some value', 'name': 'i20', '__type': 'CarA'}]}
 ```
 
-It is still under development. Feel free to report bugs or push changes!
+It is still under development. Feel free to report bugs or push changes! Cheers!
