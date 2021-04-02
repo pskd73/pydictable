@@ -81,7 +81,7 @@ class TestCore(TestCase):
             name: str = StrField()
             address: Address = ObjectField(Address)
 
-        p = Person(name=None, address=None)
+        p = Person()
         self.assertEqual(p.name, None)
         self.assertEqual(p.address, None)
 
