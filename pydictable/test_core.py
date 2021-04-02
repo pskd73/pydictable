@@ -177,6 +177,10 @@ class TestCore(TestCase):
 
     def test_optional(self):
         class Car(DictAble):
-            name: str = StrField(optional=False)
+            name: str = StrField(required=True)
 
-        c = Car(dict={'name': None})
+        try:
+            Car(dict={'name': None})
+        except ValueError:
+            pass
+        Car(dict={'name': 'Pramod'})
