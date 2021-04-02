@@ -81,7 +81,7 @@ class TestCore(TestCase):
             name: str = StrField()
             address: Address = ObjectField(Address)
 
-        p = Person()
+        p = Person(name=None, address=None)
         self.assertEqual(p.name, None)
         self.assertEqual(p.address, None)
 
@@ -174,3 +174,9 @@ class TestCore(TestCase):
             ]
         )
         self.assertEqual(g.to_json()['cars'][0]['__type'], 'CarA')
+
+    def test_optional(self):
+        class Car(DictAble):
+            name: str = StrField(optional=False)
+
+        c = Car(dict={'name': None})
