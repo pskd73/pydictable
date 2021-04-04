@@ -201,8 +201,8 @@ class TestCore(TestCase):
         }
 
         class Person(DictAble):
-            id: int = IntField(required=True, attr_name='_id')
-            name: str = StrField(required=True, attr_name='person_name')
+            id: int = IntField(required=True, key='_id')
+            name: str = StrField(required=True, key='person_name')
 
         p = Person(dict=d)
         self.assertEqual(p.name, 'Pramod')
@@ -224,7 +224,7 @@ class TestCore(TestCase):
         }
 
         class Employee(DictAble):
-            id: int = IntField(required=True, attr_name='emp_id')
+            id: int = IntField(required=True, key='emp_id')
             type: EmployeeType = EnumField(EmployeeType)
             roles: List[EmployeeType] = ListField(EnumField(EmployeeType))
 
