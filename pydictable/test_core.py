@@ -19,7 +19,7 @@ class TestCore(TestCase):
         address = Address(dict=input_dict)
         self.assertEqual(address.pin_code, 560032)
         self.assertEqual(address.street, 'RT Nagar')
-        self.assertDictEqual(address.to_json(), input_dict)
+        self.assertDictEqual(address.to_dict(), input_dict)
 
     def test_list(self):
         class MessageBox(DictAble):
@@ -29,7 +29,7 @@ class TestCore(TestCase):
         box = MessageBox(dict=input_dict)
         self.assertEqual(len(box.messages), 4)
         self.assertEqual(min(box.messages), 1)
-        self.assertDictEqual(box.to_json(), input_dict)
+        self.assertDictEqual(box.to_dict(), input_dict)
 
         class Message(DictAble):
             message: str = StrField()
@@ -71,7 +71,7 @@ class TestCore(TestCase):
         p = Person(dict=input_dict)
         self.assertEqual(p.address.lat_lng.lat, 12345)
         self.assertEqual(p.address.pin_code, 560032)
-        self.assertDictEqual(p.to_json(), input_dict)
+        self.assertDictEqual(p.to_dict(), input_dict)
 
     def test_default(self):
         class Address(DictAble):
@@ -104,7 +104,7 @@ class TestCore(TestCase):
 
         a = Address()
         a.created_at = datetime(2021, 3, 31)
-        self.assertEqual(a.to_json()['created_at'], 1617129000000)
+        self.assertEqual(a.to_dict()['created_at'], 1617129000000)
 
         a = Address(dict={'created_at': 1617129000000})
         self.assertEqual(a.created_at, datetime(2021, 3, 31))
@@ -126,7 +126,7 @@ class TestCore(TestCase):
             created_at: datetime = DatetimeField()
 
         a = Address(pin_code=560032, created_at=datetime(2021, 3, 31))
-        self.assertEqual(a.to_json()['created_at'], 1617129000000)
+        self.assertEqual(a.to_dict()['created_at'], 1617129000000)
 
     def test_custom_field(self):
         class Car(DictAble):
@@ -145,7 +145,7 @@ class TestCore(TestCase):
                 return CarB(dict=car_dict)
 
         class Garage(DictAble):
-            cars: List[Car] = ListField(CustomField(make_car, lambda c: c.to_json()))
+            cars: List[Car] = ListField(CustomField(make_car, lambda c: c.to_dict()))
 
         g = Garage(dict={
             'cars': [
@@ -153,8 +153,8 @@ class TestCore(TestCase):
                 {'__type': 'CarB', 'b_field': 'b field', 'name': 'I20'}
             ]
         })
-        self.assertEqual(g.to_json()['cars'][0]['name'], 'WagonR')
-        self.assertEqual(g.to_json()['cars'][1]['name'], 'I20')
+        self.assertEqual(g.to_dict()['cars'][0]['name'], 'WagonR')
+        self.assertEqual(g.to_dict()['cars'][1]['name'], 'I20')
 
         class Garage(DictAble):
             cars: List[Car] = ListField(MultiTypeField([CarA, CarB]))
@@ -165,15 +165,15 @@ class TestCore(TestCase):
                 {'__type': 'CarB', 'b_field': 'b field', 'name': 'Mini'}
             ]
         })
-        self.assertEqual(g.to_json()['cars'][0]['name'], 'I10')
-        self.assertEqual(g.to_json()['cars'][1]['name'], 'Mini')
+        self.assertEqual(g.to_dict()['cars'][0]['name'], 'I10')
+        self.assertEqual(g.to_dict()['cars'][1]['name'], 'Mini')
 
         g = Garage(
             cars=[
                 CarA(name='i20', a_field='some value')
             ]
         )
-        self.assertEqual(g.to_json()['cars'][0]['__type'], 'CarA')
+        self.assertEqual(g.to_dict()['cars'][0]['__type'], 'CarA')
 
     def test_optional(self):
         class Car(DictAble):
@@ -191,3 +191,20 @@ class TestCore(TestCase):
             Car()
         except ValueError as e:
             self.assertTrue('no_of_gears' in str(e))
+
+    def test_custom_attr(self):
+        d = {
+            '_id': 1,
+            'person_name': 'Pramod'
+        }
+
+        class Person(DictAble):
+            id: int = IntField(required=True, attr_name='_id')
+            name: str = StrField(required=True, attr_name='person_name')
+
+        p = Person(dict=d)
+        self.assertEqual(p.name, 'Pramod')
+        self.assertEqual(p.id, 1)
+        d = p.to_dict()
+        self.assertEqual(d['_id'], 1)
+        self.assertEqual(d['person_name'], 'Pramod')
