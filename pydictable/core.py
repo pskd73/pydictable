@@ -31,7 +31,7 @@ class Field:
 class DictAble:
     def __init__(self, *args, **kwargs):
         self.__fields = self.__get_fields()
-        self.__apply_dict({})
+        self.__clear_default_field_values()
         for k, v in kwargs.items():
             if k in self.__get_fields():
                 self.__setattr__(k, v)
@@ -51,6 +51,10 @@ class DictAble:
     def __get_attr_name(self, obj_attr: str):
         field = self.__fields[obj_attr]
         return field.attr_name if field.attr_name else obj_attr
+
+    def __clear_default_field_values(self):
+        for attr, field in self.__fields.items():
+            self.__setattr__(attr, None)
 
     def __apply_dict(self, d: dict):
         for attr, field in self.__fields.items():

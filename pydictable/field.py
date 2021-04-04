@@ -1,5 +1,6 @@
 from abc import ABC
 from datetime import datetime
+from enum import EnumMeta
 from typing import Type, List
 
 from pydictable.core import Field, DictAble
@@ -40,8 +41,6 @@ class FloatField(Field):
 
 class DatetimeField(Field):
     def from_dict(self, v: int):
-        if v is None:
-            return None
         return datetime.fromtimestamp(v / 1000)
 
     def to_dict(self, v: datetime):
@@ -57,8 +56,6 @@ class ObjectField(Field):
         self.obj_type = obj_type
 
     def from_dict(self, v):
-        if v is None:
-            return None
         return self.obj_type(dict=v)
 
     def to_dict(self, v):
@@ -74,8 +71,6 @@ class ListField(Field):
         self.obj_type = obj_type
 
     def from_dict(self, v):
-        if v is None:
-            return None
         return [self.obj_type.from_dict(e) for e in v]
 
     def to_dict(self, v):
@@ -114,3 +109,22 @@ class MultiTypeField(CustomField):
 
     def validate_value(self, field_name: str, v):
         assert v.__class__.__name__ in self.types_dict
+
+
+class EnumField(Field):
+    def __init__(self, enum: EnumMeta, *args, **kwargs):
+        super(EnumField, self).__init__(*args, **kwargs)
+        self.enum = enum
+
+    def from_dict(self, v):
+        return self.enum(v)
+
+    def to_dict(self, v):
+        return v.value
+
+    def validate_value(self, field_name: str, v):
+        try:
+            self.enum(v)
+            return True
+        except ValueError as e:
+            return False
