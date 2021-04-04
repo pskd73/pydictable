@@ -4,9 +4,9 @@ from typing import Dict
 
 
 class Field:
-    def __init__(self, required: bool=False, attr_name: str=None):
+    def __init__(self, required: bool=False, key: str=None):
         self.required = required
-        self.attr_name = attr_name
+        self.key = key
 
     def validate(self, field_name: str, v):
         try:
@@ -48,9 +48,9 @@ class DictAble:
                 fields[attr[0]] = attr[1]
         return fields
 
-    def __get_attr_name(self, obj_attr: str):
+    def __get_field_key(self, obj_attr: str):
         field = self.__fields[obj_attr]
-        return field.attr_name if field.attr_name else obj_attr
+        return field.key if field.key else obj_attr
 
     def __clear_default_field_values(self):
         for attr, field in self.__fields.items():
@@ -58,7 +58,7 @@ class DictAble:
 
     def __apply_dict(self, d: dict):
         for attr, field in self.__fields.items():
-            self.__setattr__(attr, field.from_dict(d.get(self.__get_attr_name(attr))))
+            self.__setattr__(attr, field.from_dict(d.get(self.__get_field_key(attr))))
 
     def __validate(self):
         for attr, field in DictAble.__get_fields(self).items():
@@ -67,5 +67,5 @@ class DictAble:
     def to_dict(self) -> dict:
         d = {}
         for attr, field in self.__fields.items():
-            d[self.__get_attr_name(attr)] = field.to_dict(self.__getattribute__(attr))
+            d[self.__get_field_key(attr)] = field.to_dict(self.__getattribute__(attr))
         return d
