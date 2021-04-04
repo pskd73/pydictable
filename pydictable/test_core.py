@@ -215,11 +215,12 @@ class TestCore(TestCase):
         class EmployeeType(Enum):
             ADMIN = 'ADMIN'
             MANAGER = 'MANAGER'
+            DEV = 2
 
         d = {
             'emp_id': 23,
             'type': 'ADMIN',
-            'roles': ['ADMIN', 'MANAGER']
+            'roles': ['ADMIN', 'MANAGER', 2]
         }
 
         class Employee(DictAble):
@@ -231,6 +232,12 @@ class TestCore(TestCase):
         self.assertEqual(e.type, EmployeeType.ADMIN)
         d = e.to_dict()
         self.assertEqual(d['type'], 'ADMIN')
-        self.assertEqual(e.roles, [EmployeeType.ADMIN, EmployeeType.MANAGER])
+        self.assertEqual(e.roles, [EmployeeType.ADMIN, EmployeeType.MANAGER, EmployeeType.DEV])
         d = e.to_dict()
-        self.assertEqual(d['roles'], ['ADMIN', 'MANAGER'])
+        self.assertEqual(d['roles'], ['ADMIN', 'MANAGER', 2])
+        d = {
+            'emp_id': 23,
+            'type': 'ADMIN',
+            'roles': ['ADMIN', 'MANAGER', 4]
+        }
+        self.assertRaises(ValueError, lambda: Employee(dict=d))
