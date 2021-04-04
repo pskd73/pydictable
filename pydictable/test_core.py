@@ -1,10 +1,12 @@
 import json
 from datetime import datetime
+from enum import Enum
 from typing import List
 from unittest import TestCase
 
 from pydictable.core import DictAble
-from pydictable.field import IntField, StrField, ListField, ObjectField, DatetimeField, CustomField, MultiTypeField
+from pydictable.field import IntField, StrField, ListField, ObjectField, DatetimeField, CustomField, MultiTypeField, \
+    EnumField
 
 
 class TestCore(TestCase):
@@ -208,3 +210,34 @@ class TestCore(TestCase):
         d = p.to_dict()
         self.assertEqual(d['_id'], 1)
         self.assertEqual(d['person_name'], 'Pramod')
+
+    def test_support_enum(self):
+        class EmployeeType(Enum):
+            ADMIN = 'ADMIN'
+            MANAGER = 'MANAGER'
+            DEV = 2
+
+        d = {
+            'emp_id': 23,
+            'type': 'ADMIN',
+            'roles': ['ADMIN', 'MANAGER', 2]
+        }
+
+        class Employee(DictAble):
+            id: int = IntField(required=True, attr_name='emp_id')
+            type: EmployeeType = EnumField(EmployeeType)
+            roles: List[EmployeeType] = ListField(EnumField(EmployeeType))
+
+        e = Employee(dict=d)
+        self.assertEqual(e.type, EmployeeType.ADMIN)
+        d = e.to_dict()
+        self.assertEqual(d['type'], 'ADMIN')
+        self.assertEqual(e.roles, [EmployeeType.ADMIN, EmployeeType.MANAGER, EmployeeType.DEV])
+        d = e.to_dict()
+        self.assertEqual(d['roles'], ['ADMIN', 'MANAGER', 2])
+        d = {
+            'emp_id': 23,
+            'type': 'ADMIN',
+            'roles': ['ADMIN', 'MANAGER', 4]
+        }
+        self.assertRaises(ValueError, lambda: Employee(dict=d))
