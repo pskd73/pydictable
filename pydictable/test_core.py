@@ -241,3 +241,9 @@ class TestCore(TestCase):
             'roles': ['ADMIN', 'MANAGER', 4]
         }
         self.assertRaises(ValueError, lambda: Employee(dict=d))
+
+    def test_datetime(self):
+        class User(DictAble):
+            date: datetime = DatetimeField(required=True)
+
+        self.assertRaises(ValueError, lambda: User(date=None))

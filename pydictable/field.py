@@ -47,7 +47,7 @@ class DatetimeField(Field):
         return int(v.timestamp() * 1000)
 
     def validate_value(self, field_name: str, v):
-        return type(v) == datetime
+        assert type(v) == datetime
 
 
 class ObjectField(Field):
@@ -125,6 +125,5 @@ class EnumField(Field):
     def validate_value(self, field_name: str, v):
         try:
             self.enum(v)
-            return True
         except ValueError as e:
-            return False
+            raise AssertionError('Invalid value')
