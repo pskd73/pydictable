@@ -9,11 +9,12 @@ class Field:
         self.key = key
 
     def validate(self, field_name: str, v):
+        if v is None and not self.required:
+            return
         try:
             self.validate_value(field_name, v)
         except AssertionError:
-            if self.required and v is None:
-                raise ValueError('Invalid value {} for field {}'.format(v, field_name))
+            raise ValueError('Invalid value {} for field {}'.format(v, field_name))
 
     @abstractmethod
     def from_dict(self, v):

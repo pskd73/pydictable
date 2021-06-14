@@ -247,3 +247,12 @@ class TestCore(TestCase):
             date: datetime = DatetimeField(required=True)
 
         self.assertRaises(ValueError, lambda: User(date=None))
+
+    def test_wrong_type(self):
+        class User(DictAble):
+            num: int = IntField(required=True)
+
+        self.assertRaises(ValueError, lambda: User(dict={'num': '1'}))
+        self.assertRaises(ValueError, lambda: User(dict={'num': None}))
+        u = User(dict={'num': 1})
+        self.assertEqual(1, u.num)
