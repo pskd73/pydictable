@@ -256,3 +256,17 @@ class TestCore(TestCase):
         self.assertRaises(ValueError, lambda: User(dict={'num': None}))
         u = User(dict={'num': 1})
         self.assertEqual(1, u.num)
+        self.assertRaises(ValueError, lambda: User())
+        self.assertRaises(ValueError, lambda: User(num='1'))
+        self.assertEqual(1, User(num=1).num)
+
+    def test_input_spec(self):
+        class User(DictAble):
+            num: int = IntField(required=True)
+
+        self.assertEqual(User.get_input_spec(), {
+            'num': {
+                'type': 'IntField',
+                'required': True
+            }
+        })
