@@ -281,3 +281,4 @@ class TestCore(TestCase):
         u = User(dict={'meta': {'name': 'Pramod'}})
         self.assertEqual('Pramod', u.meta['name'])
         self.assertRaises(ValueError, lambda: User(dict={'meta': 1}))
+        self.assertEqual({'meta': {'name': 'Pramod'}}, u.to_dict())

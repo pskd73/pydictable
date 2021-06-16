@@ -42,7 +42,7 @@ p.name # Pramod
 p.address # Address object
 p.address.pin_code # 560032
 
-p.to_json() == input_dict # Not order though!
+p.to_dict() == input_dict # Not order though!
 
 p.address.pin_code = 518466 # You can change the values
 
@@ -58,7 +58,7 @@ p2 = Person(
     )
 )
 p == p2 # shallow equal
-p2.to_json() == p.to_json()
+p2.to_dict() == p.to_dict()
 
 ```
 
@@ -66,6 +66,7 @@ p2.to_json() == p.to_json()
 ##### StrField
 ##### IntField
 ##### FloatField
+##### DictField
 ##### DatetimeField
 ##### ObjectField
 ```
@@ -97,7 +98,7 @@ g = Garage(
         CarA(name='i20', a_field='some value')
     ]
 )
-g.to_json() # {'cars': [{'a_field': 'some value', 'name': 'i20', '__type': 'CarA'}]}
+g.to_dict() # {'cars': [{'a_field': 'some value', 'name': 'i20', '__type': 'CarA'}]}
 ```
 
 It is still under development. Feel free to report bugs or push changes! Cheers!
