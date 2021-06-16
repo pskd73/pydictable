@@ -127,3 +127,14 @@ class EnumField(Field):
             self.enum(v)
         except ValueError as e:
             raise AssertionError('Invalid value')
+
+
+class DictField(Field):
+    def from_dict(self, v):
+        return v
+
+    def to_dict(self, v):
+        return v
+
+    def validate_value(self, field_name: str, v):
+        assert type(v) == dict

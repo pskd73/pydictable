@@ -6,7 +6,7 @@ from unittest import TestCase
 
 from pydictable.core import DictAble
 from pydictable.field import IntField, StrField, ListField, ObjectField, DatetimeField, CustomField, MultiTypeField, \
-    EnumField
+    EnumField, DictField
 
 
 class TestCore(TestCase):
@@ -270,3 +270,14 @@ class TestCore(TestCase):
                 'required': True
             }
         })
+
+    def test_dict_field(self):
+        class User(DictAble):
+            meta: dict = DictField(required=True)
+
+        u = User(meta={'name': 'Pramod'})
+        self.assertEqual('Pramod', u.meta['name'])
+        self.assertRaises(ValueError, lambda: User())
+        u = User(dict={'meta': {'name': 'Pramod'}})
+        self.assertEqual('Pramod', u.meta['name'])
+        self.assertRaises(ValueError, lambda: User(dict={'meta': 1}))
