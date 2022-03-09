@@ -17,6 +17,17 @@ class StrField(Field):
         assert type(v) == str
 
 
+class BoolField(Field):
+    def from_dict(self, v: bool):
+        return bool
+
+    def to_dict(self, v):
+        return v
+
+    def validate_value(self, field_name: str, v):
+        assert type(v) == bool
+
+
 class IntField(Field):
     def from_dict(self, v: int):
         return v
