@@ -70,7 +70,7 @@ class ObjectField(Field):
         return self.obj_type(dict=v)
 
     def to_dict(self, v):
-        return v.to_dict()
+        return None if v is None else v.to_dict()
 
     def validate_value(self, field_name: str, v):
         assert isinstance(v, DictAble)
