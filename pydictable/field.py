@@ -19,7 +19,7 @@ class StrField(Field):
 
 class BoolField(Field):
     def from_dict(self, v: bool):
-        return bool
+        return v
 
     def to_dict(self, v):
         return v
