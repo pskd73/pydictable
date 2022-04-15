@@ -80,7 +80,13 @@ __init__(self, obj_type: Field)
 ```
 __init__(self, types: List[Type[DictAble]])
 ```
-```python
+
+##### DictValueField
+```
+__init__(self, dictable_value: Type[DictAble])
+```
+
+```
 class Car(DictAble):
     name: str = StrField()
 
@@ -92,6 +98,10 @@ class CarB(Car):
 
 class Garage(DictAble):
     cars: List[Car] = ListField(MultiTypeField([CarA, CarB]))
+    
+class Company(DictAble):
+    garbage: Dict[str, Garage] = DictValueField(Garage)
+
 
 g = Garage(
     cars=[
@@ -99,6 +109,16 @@ g = Garage(
     ]
 )
 g.to_dict() # {'cars': [{'a_field': 'some value', 'name': 'i20', '__type': 'CarA'}]}
+
+c = Company(
+    garbage={
+        'g': Garage(
+            cars=[
+                CarA(name='i20', a_field='some value')
+            ]
+        )
+    }
+)
 ```
 
 It is still under development. Feel free to report bugs or push changes! Cheers!
