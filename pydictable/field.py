@@ -149,3 +149,14 @@ class DictField(Field):
 
     def validate_value(self, field_name: str, v):
         assert type(v) == dict
+
+
+class DictValueField(CustomField):
+    def __init__(self, dictable_value: Type[DictAble]):
+        super(DictValueField, self).__init__(
+            lambda v: {k: dictable_value(dict=v) for k, v in v.items()},
+            lambda v: {k: v.to_dict() for k, v in v.items()}
+        )
+
+    def validate_value(self, field_name: str, v):
+        pass
