@@ -1,12 +1,12 @@
 import json
 from datetime import datetime
 from enum import Enum
-from typing import List
+from typing import List, Dict
 from unittest import TestCase
 
 from pydictable.core import DictAble
 from pydictable.field import IntField, StrField, ListField, ObjectField, DatetimeField, CustomField, MultiTypeField, \
-    EnumField, DictField
+    EnumField, DictField, DictValueField
 
 
 class TestCore(TestCase):
@@ -293,3 +293,19 @@ class TestCore(TestCase):
         self.assertRaises(ValueError, lambda: User(dict={'meta': 4}))
         self.assertRaises(ValueError, lambda: User(dict={'meta': False}))
         User(dict={'meta': {}})
+
+    def test_dict_value_field(self):
+        class Address(DictAble):
+            pin: str = StrField(required=True)
+
+        class User(DictAble):
+            pins: Dict[str, Address] = DictValueField(Address)
+
+        User()
+        User(dict={})
+
+        class User(DictAble):
+            pins: Dict[str, Address] = DictValueField(Address)
+
+        u = User(pins={'a': Address(pin='333')})
+        u = User(dict={'pins': {'a': {'pin': '333'}}})

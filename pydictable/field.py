@@ -183,12 +183,22 @@ class DictField(Field):
         assert type(v) == dict
 
 
-class DictValueField(CustomField):
-    def __init__(self, dictable_value: Type[DictAble]):
-        super(DictValueField, self).__init__(
-            lambda v: {k: dictable_value(dict=v) for k, v in v.items()},
-            lambda v: {k: v.to_dict() for k, v in v.items()}
-        )
+class DictValueField(Field):
+    def __init__(self, value_type: Type[DictAble], required: bool = False, key: str = None):
+        self.value_type = value_type
+        super(DictValueField, self).__init__(required, key)
 
-    def validate_value(self, field_name: str, v):
-        pass
+    def from_dict(self, v):
+        return {key: self.value_type(dict=val) for key, val in v.items()}
+
+    def to_dict(self, v):
+        return {key: val.to_dict() for key, val in v.items()}
+
+    def validate_dict(self, field_name: str, v: dict):
+        assert type(v) == dict
+        [self.value_type(dict=v) for v in v.values()]
+
+    def validate(self, field_name: str, v):
+        assert type(v) == dict
+        for val in v.values():
+            assert isinstance(val, DictAble)
