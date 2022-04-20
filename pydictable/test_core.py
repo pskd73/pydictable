@@ -282,3 +282,14 @@ class TestCore(TestCase):
         self.assertEqual('Pramod', u.meta['name'])
         self.assertRaises(ValueError, lambda: User(dict={'meta': 1}))
         self.assertEqual({'meta': {'name': 'Pramod'}}, u.to_dict())
+
+    def test_pre_post_validate(self):
+        class User(DictAble):
+            meta: dict = DictField(required=True)
+        self.assertRaises(ValueError, lambda: User())
+        self.assertRaises(ValueError, lambda: User(meta=3))
+        User(meta={})
+        self.assertRaises(ValueError, lambda: User(dict={}))
+        self.assertRaises(ValueError, lambda: User(dict={'meta': 4}))
+        self.assertRaises(ValueError, lambda: User(dict={'meta': False}))
+        User(dict={'meta': {}})

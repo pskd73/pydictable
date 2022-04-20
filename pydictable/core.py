@@ -4,17 +4,9 @@ from typing import Dict
 
 
 class Field:
-    def __init__(self, required: bool=False, key: str=None):
+    def __init__(self, required: bool = False, key: str = None):
         self.required = required
         self.key = key
-
-    def validate(self, field_name: str, v):
-        if v is None and not self.required:
-            return
-        try:
-            self.validate_value(field_name, v)
-        except AssertionError:
-            raise ValueError('Invalid value {} for field {}'.format(v, field_name))
 
     @abstractmethod
     def from_dict(self, v):
@@ -25,7 +17,11 @@ class Field:
         pass
 
     @abstractmethod
-    def validate_value(self, field_name: str, v):
+    def validate_dict(self, field_name: str, v):
+        pass
+
+    @abstractmethod
+    def validate(self, field_name: str, v):
         pass
 
 
@@ -37,6 +33,7 @@ class DictAble:
             if k in fields:
                 self.__setattr__(k, v)
         if kwargs.get('dict'):
+            self.__validate_dict(kwargs['dict'])
             self.__apply_dict(kwargs['dict'])
         if len(args) > 0:
             raise ReferenceError('Use kwargs to init DictAble')
@@ -63,9 +60,25 @@ class DictAble:
         for attr, field in self.__class__.__get_fields().items():
             self.__setattr__(attr, field.from_dict(d.get(self.__get_field_key(attr))))
 
+    def __validate_dict(self, raw_values: dict):
+        for attr, field in self.__get_fields().items():
+            value = raw_values.get(self.__get_field_key(attr))
+            if value is None and not field.required:
+                continue
+            try:
+                field.validate_dict(attr, value)
+            except AssertionError:
+                raise ValueError('Pre check failed. Invalid value {} for field {}'.format(value, attr))
+
     def __validate(self):
         for attr, field in self.__get_fields().items():
-            field.validate(attr, self.__getattribute__(attr))
+            value = self.__getattribute__(attr)
+            if value is None and not field.required:
+                continue
+            try:
+                field.validate(attr, value)
+            except AssertionError:
+                raise ValueError('Post check failed. Invalid value {} for field {}'.format(value, attr))
 
     def to_dict(self) -> dict:
         d = {}

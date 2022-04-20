@@ -1,6 +1,6 @@
 from abc import ABC
 from datetime import datetime
-from enum import EnumMeta
+from enum import EnumMeta, Enum
 from typing import Type, List
 
 from pydictable.core import Field, DictAble
@@ -13,7 +13,10 @@ class StrField(Field):
     def to_dict(self, v):
         return v
 
-    def validate_value(self, field_name: str, v):
+    def validate_dict(self, field_name: str, v):
+        assert type(v) == str
+
+    def validate(self, field_name: str, v):
         assert type(v) == str
 
 
@@ -24,7 +27,10 @@ class BoolField(Field):
     def to_dict(self, v):
         return v
 
-    def validate_value(self, field_name: str, v):
+    def validate_dict(self, field_name: str, v):
+        assert type(v) == bool
+
+    def validate(self, field_name: str, v):
         assert type(v) == bool
 
 
@@ -35,7 +41,10 @@ class IntField(Field):
     def to_dict(self, v):
         return v
 
-    def validate_value(self, field_name: str, v):
+    def validate_dict(self, field_name: str, v):
+        assert type(v) == int
+
+    def validate(self, field_name: str, v):
         assert type(v) == int
 
 
@@ -46,7 +55,10 @@ class FloatField(Field):
     def to_dict(self, v):
         return v
 
-    def validate_value(self, field_name: str, v):
+    def validate_dict(self, field_name: str, v):
+        assert type(v) == float
+
+    def validate(self, field_name: str, v):
         assert type(v) == float
 
 
@@ -57,8 +69,11 @@ class DatetimeField(Field):
     def to_dict(self, v: datetime):
         return int(v.timestamp() * 1000)
 
-    def validate_value(self, field_name: str, v):
-        assert type(v) == datetime
+    def validate_dict(self, field_name: str, v):
+        assert type(v) == int
+
+    def validate(self, field_name: str, v):
+        assert isinstance(v, datetime)
 
 
 class ObjectField(Field):
@@ -72,7 +87,10 @@ class ObjectField(Field):
     def to_dict(self, v):
         return None if v is None else v.to_dict()
 
-    def validate_value(self, field_name: str, v):
+    def validate_dict(self, field_name: str, v):
+        self.obj_type(dict=v)
+
+    def validate(self, field_name: str, v):
         assert isinstance(v, DictAble)
 
 
@@ -87,8 +105,13 @@ class ListField(Field):
     def to_dict(self, v):
         return [self.obj_type.to_dict(e) for e in v]
 
-    def validate_value(self, field_name: str, v):
-        assert type(v) == list and False not in set([self.obj_type.validate(field_name, e) for e in v])
+    def validate_dict(self, field_name: str, v):
+        assert type(v) == list
+        [self.obj_type.validate_dict(field_name, x) for x in v]
+
+    def validate(self, field_name: str, v):
+        assert type(v) == list
+        [self.obj_type.validate(field_name, x) for x in v]
 
 
 class CustomField(Field, ABC):
@@ -118,8 +141,11 @@ class MultiTypeField(CustomField):
             *args, **kwargs
         )
 
-    def validate_value(self, field_name: str, v):
-        assert v.__class__.__name__ in self.types_dict
+    def validate_dict(self, field_name: str, v):
+        self.types_dict[v[self.TYPE_KEY]](dict=v)
+
+    def validate(self, field_name: str, v):
+        pass
 
 
 class EnumField(Field):
@@ -133,11 +159,14 @@ class EnumField(Field):
     def to_dict(self, v):
         return v.value
 
-    def validate_value(self, field_name: str, v):
+    def validate_dict(self, field_name: str, v):
         try:
             self.enum(v)
         except ValueError as e:
             raise AssertionError('Invalid value')
+
+    def validate(self, field_name: str, v):
+        assert isinstance(v, Enum)
 
 
 class DictField(Field):
@@ -147,7 +176,10 @@ class DictField(Field):
     def to_dict(self, v):
         return v
 
-    def validate_value(self, field_name: str, v):
+    def validate_dict(self, field_name: str, v):
+        assert type(v) == dict
+
+    def validate(self, field_name: str, v):
         assert type(v) == dict
 
 
