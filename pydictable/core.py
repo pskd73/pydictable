@@ -1,32 +1,23 @@
 import inspect
-from abc import abstractmethod
-from typing import Dict
+from typing import Dict, get_type_hints, Optional, Union, List
+
+from pydictable.field import StrField, IntField, FloatField, BoolField, ListField, MultiTypeField, UnionField, \
+    NoneField, ObjectField
+from pydictable.type import _BaseDictAble, Field
 
 
-class Field:
-    def __init__(self, required: bool = False, key: str = None):
-        self.required = required
-        self.key = key
-
-    @abstractmethod
-    def from_dict(self, v):
-        pass
-
-    @abstractmethod
-    def to_dict(self, v):
-        pass
-
-    @abstractmethod
-    def validate_dict(self, field_name: str, v):
-        pass
-
-    @abstractmethod
-    def validate(self, field_name: str, v):
-        pass
+TYPE_TO_FIELD = {
+    str: StrField,
+    int: IntField,
+    float: FloatField,
+    bool: BoolField,
+    type(None): NoneField
+}
 
 
-class DictAble:
+class DictAble(_BaseDictAble):
     def __init__(self, *args, **kwargs):
+        super(DictAble, self).__init__(*args, **kwargs)
         self.__clear_default_field_values()
         fields = self.__get_fields()
         for k, v in kwargs.items():
@@ -40,11 +31,29 @@ class DictAble:
         self.__validate()
 
     @classmethod
+    def __get_field_by_type_hint(cls, type_hint):
+        if type_hint in TYPE_TO_FIELD:
+            return TYPE_TO_FIELD[type_hint](required=True)
+        elif '__origin__' in type_hint.__dict__ and type_hint.__origin__ == Union:
+            sub_types = []
+            for sub_type in type_hint.__args__:
+                sub_types.append(cls.__get_field_by_type_hint(sub_type))
+            return UnionField(sub_types, required=True)
+        elif '__origin__' in type_hint.__dict__ and type_hint.__origin__ == list:
+            return ListField(cls.__get_field_by_type_hint(type_hint.__args__[0]), required=True)
+        elif issubclass(type_hint, _BaseDictAble):
+            return ObjectField(type_hint)
+        raise NotImplementedError(f'Unsupported type hint {type_hint}')
+
+    @classmethod
     def __get_fields(cls) -> Dict[str, Field]:
         fields = {}
         for attr in inspect.getmembers(cls):
             if isinstance(attr[1], Field):
                 fields[attr[0]] = attr[1]
+        for name, th in get_type_hints(cls).items():
+            if name not in fields:
+                fields[name] = cls.__get_field_by_type_hint(th)
         return fields
 
     @classmethod

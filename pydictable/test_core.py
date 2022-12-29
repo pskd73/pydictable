@@ -1,12 +1,12 @@
 import json
 from datetime import datetime
 from enum import Enum
-from typing import List, Dict
+from typing import List, Dict, Optional, Tuple, Union
 from unittest import TestCase
 
 from pydictable.core import DictAble
 from pydictable.field import IntField, StrField, ListField, ObjectField, DatetimeField, CustomField, MultiTypeField, \
-    EnumField, DictField, DictValueField
+    EnumField, DictField, DictValueField, UnionField
 
 
 class TestCore(TestCase):
@@ -309,3 +309,91 @@ class TestCore(TestCase):
 
         u = User(pins={'a': Address(pin='333')})
         u = User(dict={'pins': {'a': {'pin': '333'}}})
+
+    def test_union_field(self):
+        class User(DictAble):
+            roll_no = UnionField([IntField(), StrField()])
+
+        self.assertEqual(User(roll_no="1").roll_no, "1")
+        self.assertEqual(User(roll_no=1).roll_no, 1)
+
+    def test_type_hints(self):
+        class Address(DictAble):
+            pin: Optional[str]
+
+        self.assertEqual(Address(pin=None).pin, None)
+        self.assertRaises(ValueError, lambda: Address(pin=3))
+
+        class Address(DictAble):
+            pin: str
+
+        self.assertEqual(Address(pin='123456').pin, '123456')
+        self.assertRaises(ValueError, lambda: Address(pin=12))
+        self.assertRaises(ValueError, lambda: Address(pin=None))
+
+        class HealthCard(DictAble):
+            weight: Union[int, float]
+
+        self.assertRaises(ValueError, lambda: HealthCard())
+        self.assertRaises(ValueError, lambda: HealthCard(weight='79'))
+        self.assertEqual(HealthCard(weight=79).weight, 79)
+        self.assertEqual(HealthCard(weight=80.7).weight, 80.7)
+        self.assertEqual(HealthCard(dict={'weight': 80.7}).weight, 80.7)
+        self.assertRaises(ValueError, lambda: HealthCard(dict={}))
+        self.assertRaises(ValueError, lambda: HealthCard(dict={'weight': '79'}))
+
+        class WheelConfig(DictAble):
+            side: str
+            fixed: bool
+            engineer_names: List[str]
+
+        class Car(DictAble):
+            wheel_config: WheelConfig
+
+        car = Car(wheel_config=WheelConfig(side='left', fixed=True, engineer_names=['Pramod']))
+        self.assertEqual(car.wheel_config.side, 'left')
+        self.assertTrue('Pramod' in car.wheel_config.engineer_names)
+        self.assertTrue(car.wheel_config.fixed)
+        car = Car(dict={
+            'wheel_config': {
+                'side': 'right',
+                'fixed': False,
+                'engineer_names': []
+            }
+        })
+        self.assertEqual(car.wheel_config.side, 'right')
+        self.assertFalse('Pramod' in car.wheel_config.engineer_names)
+        self.assertFalse(car.wheel_config.fixed)
+
+        class Car(DictAble):
+            wheel_config: List[WheelConfig]
+
+        try:
+            Car(dict={
+                'wheel_config': {
+                    'side': 'right',
+                    'fixed': False,
+                    'engineer_names': []
+                }
+            })
+            raise AssertionError('It should fail')
+        except ValueError:
+            pass
+
+        car = Car(dict={
+            'wheel_config': [
+                {
+                    'side': 'right',
+                    'fixed': False,
+                    'engineer_names': ['Kumar']
+                },
+                {
+                    'side': 'left',
+                    'fixed': True,
+                    'engineer_names': ['Pramod']
+                }
+            ]
+        })
+        self.assertEqual(len(car.wheel_config), 2)
+        self.assertEqual(car.wheel_config[0].side, 'right')
+        self.assertEqual(car.wheel_config[1].side, 'left')

@@ -3,7 +3,7 @@ from datetime import datetime
 from enum import EnumMeta, Enum
 from typing import Type, List
 
-from pydictable.core import Field, DictAble
+from pydictable.type import Field, _BaseDictAble
 
 
 class StrField(Field):
@@ -77,7 +77,7 @@ class DatetimeField(Field):
 
 
 class ObjectField(Field):
-    def __init__(self, obj_type: Type[DictAble], required: bool=False):
+    def __init__(self, obj_type: Type[_BaseDictAble], required: bool=False):
         super(ObjectField, self).__init__(required=required)
         self.obj_type = obj_type
 
@@ -91,7 +91,7 @@ class ObjectField(Field):
         self.obj_type(dict=v)
 
     def validate(self, field_name: str, v):
-        assert isinstance(v, DictAble)
+        assert isinstance(v, _BaseDictAble)
 
 
 class ListField(Field):
@@ -133,7 +133,7 @@ class CustomField(Field, ABC):
 class MultiTypeField(CustomField):
     TYPE_KEY = '__type'
 
-    def __init__(self, types: List[Type[DictAble]], *args, **kwargs):
+    def __init__(self, types: List[Type[_BaseDictAble]], *args, **kwargs):
         self.types_dict = {t.__name__: t for t in types}
         super(MultiTypeField, self).__init__(
             lambda d: self.types_dict[d[self.TYPE_KEY]](dict=d),
@@ -184,7 +184,7 @@ class DictField(Field):
 
 
 class DictValueField(Field):
-    def __init__(self, value_type: Type[DictAble], required: bool = False, key: str = None):
+    def __init__(self, value_type: Type[_BaseDictAble], required: bool = False, key: str = None):
         self.value_type = value_type
         super(DictValueField, self).__init__(required, key)
 
@@ -201,4 +201,60 @@ class DictValueField(Field):
     def validate(self, field_name: str, v):
         assert type(v) == dict
         for val in v.values():
-            assert isinstance(val, DictAble)
+            assert isinstance(val, _BaseDictAble)
+
+
+class UnionField(Field):
+    def __init__(self, fields: List[Field], *args, **kwargs):
+        super(UnionField, self).__init__(*args, **kwargs)
+        self.fields_dict = {f.__class__.__name__: f for f in fields}
+
+    def from_dict(self, v):
+        for name, field in self.fields_dict.items():
+            try:
+                field.validate_dict('', v)
+                return field.from_dict(v)
+            except AssertionError:
+                pass
+        raise NotImplementedError()
+
+    def to_dict(self, v):
+        for name, field in self.fields_dict.items():
+            try:
+                field.validate('', v)
+                return field.to_dict(v)
+            except AssertionError:
+                pass
+        raise NotImplementedError()
+
+    def validate_dict(self, field_name: str, v):
+        for name, field in self.fields_dict.items():
+            try:
+                field.validate_dict('', v)
+                return
+            except AssertionError:
+                pass
+        raise AssertionError(f'{v} does not match for any of {list(self.fields_dict.keys())}')
+
+    def validate(self, field_name: str, v):
+        for name, field in self.fields_dict.items():
+            try:
+                field.validate('', v)
+                return
+            except AssertionError:
+                pass
+        raise AssertionError(f'{v} does not match for any of {list(self.fields_dict.keys())}')
+
+
+class NoneField(Field):
+    def from_dict(self, v):
+        return None
+
+    def to_dict(self, v):
+        return None
+
+    def validate_dict(self, field_name: str, v):
+        assert v is None
+
+    def validate(self, field_name: str, v):
+        assert v is None
