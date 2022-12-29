@@ -6,7 +6,7 @@ from unittest import TestCase
 
 from pydictable.core import DictAble
 from pydictable.field import IntField, StrField, ListField, ObjectField, DatetimeField, CustomField, MultiTypeField, \
-    EnumField, DictField, DictValueField, UnionField
+    EnumField, DictField, DictValueField, UnionField, DataValidationError
 
 
 class TestCore(TestCase):
@@ -181,17 +181,17 @@ class TestCore(TestCase):
         class Car(DictAble):
             name: str = StrField(required=True)
 
-        self.assertRaises(ValueError, lambda: Car(dict={'name': None}))
-        self.assertRaises(ValueError, lambda: Car(dict={}))
-        self.assertRaises(ValueError, lambda: Car(name=None))
-        self.assertRaises(ValueError, lambda: Car())
+        self.assertRaises(DataValidationError, lambda: Car(dict={'name': None}))
+        self.assertRaises(DataValidationError, lambda: Car(dict={}))
+        self.assertRaises(DataValidationError, lambda: Car(name=None))
+        self.assertRaises(DataValidationError, lambda: Car())
         Car(dict={'name': 'Pramod'})
 
         class Car(DictAble):
             no_of_gears: int = IntField(required=True)
         try:
             Car()
-        except ValueError as e:
+        except DataValidationError as e:
             self.assertTrue('no_of_gears' in str(e))
 
     def test_custom_attr(self):
@@ -240,24 +240,24 @@ class TestCore(TestCase):
             'type': 'ADMIN',
             'roles': ['ADMIN', 'MANAGER', 4]
         }
-        self.assertRaises(ValueError, lambda: Employee(dict=d))
+        self.assertRaises(DataValidationError, lambda: Employee(dict=d))
 
     def test_datetime(self):
         class User(DictAble):
             date: datetime = DatetimeField(required=True)
 
-        self.assertRaises(ValueError, lambda: User(date=None))
+        self.assertRaises(DataValidationError, lambda: User(date=None))
 
     def test_wrong_type(self):
         class User(DictAble):
             num: int = IntField(required=True)
 
-        self.assertRaises(ValueError, lambda: User(dict={'num': '1'}))
-        self.assertRaises(ValueError, lambda: User(dict={'num': None}))
+        self.assertRaises(DataValidationError, lambda: User(dict={'num': '1'}))
+        self.assertRaises(DataValidationError, lambda: User(dict={'num': None}))
         u = User(dict={'num': 1})
         self.assertEqual(1, u.num)
-        self.assertRaises(ValueError, lambda: User())
-        self.assertRaises(ValueError, lambda: User(num='1'))
+        self.assertRaises(DataValidationError, lambda: User())
+        self.assertRaises(DataValidationError, lambda: User(num='1'))
         self.assertEqual(1, User(num=1).num)
 
     def test_input_spec(self):
@@ -267,7 +267,7 @@ class TestCore(TestCase):
         self.assertEqual(User.get_input_spec(), {
             'num': {
                 'type': 'IntField',
-                'required': True
+                'required': True,
             }
         })
 
@@ -277,21 +277,21 @@ class TestCore(TestCase):
 
         u = User(meta={'name': 'Pramod'})
         self.assertEqual('Pramod', u.meta['name'])
-        self.assertRaises(ValueError, lambda: User())
+        self.assertRaises(DataValidationError, lambda: User())
         u = User(dict={'meta': {'name': 'Pramod'}})
         self.assertEqual('Pramod', u.meta['name'])
-        self.assertRaises(ValueError, lambda: User(dict={'meta': 1}))
+        self.assertRaises(DataValidationError, lambda: User(dict={'meta': 1}))
         self.assertEqual({'meta': {'name': 'Pramod'}}, u.to_dict())
 
     def test_pre_post_validate(self):
         class User(DictAble):
             meta: dict = DictField(required=True)
-        self.assertRaises(ValueError, lambda: User())
-        self.assertRaises(ValueError, lambda: User(meta=3))
+        self.assertRaises(DataValidationError, lambda: User())
+        self.assertRaises(DataValidationError, lambda: User(meta=3))
         User(meta={})
-        self.assertRaises(ValueError, lambda: User(dict={}))
-        self.assertRaises(ValueError, lambda: User(dict={'meta': 4}))
-        self.assertRaises(ValueError, lambda: User(dict={'meta': False}))
+        self.assertRaises(DataValidationError, lambda: User(dict={}))
+        self.assertRaises(DataValidationError, lambda: User(dict={'meta': 4}))
+        self.assertRaises(DataValidationError, lambda: User(dict={'meta': False}))
         User(dict={'meta': {}})
 
     def test_dict_value_field(self):
@@ -322,25 +322,25 @@ class TestCore(TestCase):
             pin: Optional[str]
 
         self.assertEqual(Address(pin=None).pin, None)
-        self.assertRaises(ValueError, lambda: Address(pin=3))
+        self.assertRaises(DataValidationError, lambda: Address(pin=3))
 
         class Address(DictAble):
             pin: str
 
         self.assertEqual(Address(pin='123456').pin, '123456')
-        self.assertRaises(ValueError, lambda: Address(pin=12))
-        self.assertRaises(ValueError, lambda: Address(pin=None))
+        self.assertRaises(DataValidationError, lambda: Address(pin=12))
+        self.assertRaises(DataValidationError, lambda: Address(pin=None))
 
         class HealthCard(DictAble):
             weight: Union[int, float]
 
-        self.assertRaises(ValueError, lambda: HealthCard())
-        self.assertRaises(ValueError, lambda: HealthCard(weight='79'))
+        self.assertRaises(DataValidationError, lambda: HealthCard())
+        self.assertRaises(DataValidationError, lambda: HealthCard(weight='79'))
         self.assertEqual(HealthCard(weight=79).weight, 79)
         self.assertEqual(HealthCard(weight=80.7).weight, 80.7)
         self.assertEqual(HealthCard(dict={'weight': 80.7}).weight, 80.7)
-        self.assertRaises(ValueError, lambda: HealthCard(dict={}))
-        self.assertRaises(ValueError, lambda: HealthCard(dict={'weight': '79'}))
+        self.assertRaises(DataValidationError, lambda: HealthCard(dict={}))
+        self.assertRaises(DataValidationError, lambda: HealthCard(dict={'weight': '79'}))
 
         class WheelConfig(DictAble):
             side: str
@@ -377,7 +377,7 @@ class TestCore(TestCase):
                 }
             })
             raise AssertionError('It should fail')
-        except ValueError:
+        except DataValidationError:
             pass
 
         car = Car(dict={
@@ -397,3 +397,134 @@ class TestCore(TestCase):
         self.assertEqual(len(car.wheel_config), 2)
         self.assertEqual(car.wheel_config[0].side, 'right')
         self.assertEqual(car.wheel_config[1].side, 'left')
+
+    def test_error(self):
+        class Size(DictAble):
+            h: float
+            w: float
+            gaps: List[int]
+            id: Union[int, str]
+
+        class Avatar(DictAble):
+            url: str
+            size: Size
+
+        class User(DictAble):
+            name: str
+            avatar: Avatar
+
+        try:
+            User(dict={'name': 'Pramod', 'avatar': {'url': 'some', 'size': {'h': 2.3, 'w': 1.4, 'gaps': [3, 4], 'id': 2.2}}})
+            raise AssertionError('It should fail')
+        except DataValidationError as e:
+            self.assertEqual(e.path, 'avatar.size.id')
+
+        try:
+            User(dict={})
+            raise AssertionError('It should fail')
+        except DataValidationError as e:
+            self.assertEqual(e.path, 'name')
+
+        try:
+            User(dict={'name': 'Pramod', 'avatar': {}})
+            raise AssertionError('It should fail')
+        except DataValidationError as e:
+            self.assertEqual(e.path, 'avatar.url')
+
+        try:
+            User(dict={'name': 'Pramod', 'avatar': {'url': 'https://some.com'}})
+            raise AssertionError('It should fail')
+        except DataValidationError as e:
+            self.assertEqual(e.path, 'avatar.size')
+
+        try:
+            User(dict={'name': 'Pramod', 'avatar': {'url': 'https://some.com', 'size': {}}})
+            raise AssertionError('It should fail')
+        except DataValidationError as e:
+            self.assertEqual(e.path, 'avatar.size.h')
+
+        try:
+            User(dict={'name': 'Pramod', 'avatar': {'url': 'https://some.com', 'size': {'h': 3., 'w': 4.}}})
+            raise AssertionError('It should fail')
+        except DataValidationError as e:
+            self.assertEqual(e.path, 'avatar.size.gaps')
+
+        try:
+            User(dict={
+                'name': 'Pramod',
+                'avatar': {
+                    'url': 'https://some.com',
+                    'size': {
+                        'h': 3.,
+                        'w': 4.,
+                        'id': 3,
+                        'gaps': [1, 2, '3', 4]
+                    },
+                }
+            })
+            raise AssertionError('It should fail')
+        except DataValidationError as e:
+            self.assertEqual(e.path, 'avatar.size.gaps.[2]')
+
+        user = User(
+            name='Pramod',
+            avatar=Avatar(
+                url='https://some.com',
+                size=Size(
+                    h=2.,
+                    w=1.2,
+                    id=10,
+                    gaps=[1, 2, 3, 4]
+                )
+            )
+        )
+
+        self.assertEqual(
+            user.to_dict(),
+            {'name': 'Pramod',
+             'avatar': {'url': 'https://some.com', 'size': {'h': 2.0, 'w': 1.2, 'gaps': [1, 2, 3, 4], 'id': 10}}}
+        )
+
+        self.assertEqual(
+            User.get_input_spec(),
+            {
+                'name': {
+                    'type': 'StrField',
+                    'required': True,
+                },
+                'avatar': {
+                    'type': 'ObjectField',
+                    'required': True,
+                    'of_type': {
+                        'url': {
+                            'type': 'StrField',
+                            'required': True,
+                        },
+                        'size': {
+                            'type': 'ObjectField',
+                            'required': True,
+                            'of_type': {
+                                'h': {
+                                    'type': 'FloatField',
+                                    'required': True,
+                                },
+                                'w': {
+                                    'type': 'FloatField',
+                                    'required': True,
+                                },
+                                'gaps': {
+                                    'type': 'ListField',
+                                    'required': True,
+                                    'of_type': 'IntField'
+                                },
+                                'id': {
+                                    'type': 'UnionField',
+                                    'required': True,
+                                    'of_type': ['IntField', 'StrField']
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        )

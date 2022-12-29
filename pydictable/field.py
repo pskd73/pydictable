@@ -6,6 +6,13 @@ from typing import Type, List
 from pydictable.type import Field, _BaseDictAble
 
 
+class DataValidationError(Exception):
+    def __init__(self, path: str, err):
+        super(DataValidationError, self).__init__(path, err)
+        self.path = path
+        self.err = err
+
+
 class StrField(Field):
     def from_dict(self, v: str):
         return v
@@ -88,10 +95,14 @@ class ObjectField(Field):
         return None if v is None else v.to_dict()
 
     def validate_dict(self, field_name: str, v):
+        assert not self.required or v is not None
         self.obj_type(dict=v)
 
     def validate(self, field_name: str, v):
         assert isinstance(v, _BaseDictAble)
+
+    def of_type(self):
+        return self.obj_type.get_input_spec()
 
 
 class ListField(Field):
@@ -107,11 +118,18 @@ class ListField(Field):
 
     def validate_dict(self, field_name: str, v):
         assert type(v) == list
-        [self.obj_type.validate_dict(field_name, x) for x in v]
+        for i, _val in enumerate(v):
+            try:
+                self.obj_type.validate_dict(field_name, _val)
+            except AssertionError as e:
+                raise DataValidationError(f'[{i}]', str(e))
 
     def validate(self, field_name: str, v):
         assert type(v) == list
         [self.obj_type.validate(field_name, x) for x in v]
+
+    def of_type(self):
+        return self.obj_type.__class__.__name__
 
 
 class CustomField(Field, ABC):
@@ -244,6 +262,9 @@ class UnionField(Field):
             except AssertionError:
                 pass
         raise AssertionError(f'{v} does not match for any of {list(self.fields_dict.keys())}')
+
+    def of_type(self):
+        return [f for f in self.fields_dict.keys()]
 
 
 class NoneField(Field):

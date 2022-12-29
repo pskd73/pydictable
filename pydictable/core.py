@@ -2,7 +2,7 @@ import inspect
 from typing import Dict, get_type_hints, Optional, Union, List
 
 from pydictable.field import StrField, IntField, FloatField, BoolField, ListField, MultiTypeField, UnionField, \
-    NoneField, ObjectField
+    NoneField, ObjectField, DataValidationError
 from pydictable.type import _BaseDictAble, Field
 
 
@@ -42,7 +42,7 @@ class DictAble(_BaseDictAble):
         elif '__origin__' in type_hint.__dict__ and type_hint.__origin__ == list:
             return ListField(cls.__get_field_by_type_hint(type_hint.__args__[0]), required=True)
         elif issubclass(type_hint, _BaseDictAble):
-            return ObjectField(type_hint)
+            return ObjectField(type_hint, required=True)
         raise NotImplementedError(f'Unsupported type hint {type_hint}')
 
     @classmethod
@@ -76,8 +76,10 @@ class DictAble(_BaseDictAble):
                 continue
             try:
                 field.validate_dict(attr, value)
+            except DataValidationError as e:
+                raise DataValidationError(f'{attr}.{e.path}', e.err)
             except AssertionError:
-                raise ValueError('Pre check failed. Invalid value {} for field {}'.format(value, attr))
+                raise DataValidationError(attr, 'Pre check failed. Invalid value "{}" for field "{}"'.format(value, attr))
 
     def __validate(self):
         for attr, field in self.__get_fields().items():
@@ -86,8 +88,10 @@ class DictAble(_BaseDictAble):
                 continue
             try:
                 field.validate(attr, value)
+            except DataValidationError as e:
+                raise DataValidationError(f'{attr}.{e.path}', e.err)
             except AssertionError:
-                raise ValueError('Post check failed. Invalid value {} for field {}'.format(value, attr))
+                raise DataValidationError(attr, 'Post check failed. Invalid value "{}" for field "{}"'.format(value, attr))
 
     def to_dict(self) -> dict:
         d = {}
@@ -99,8 +103,12 @@ class DictAble(_BaseDictAble):
     def get_input_spec(cls) -> dict:
         d = {}
         for attr, field in cls.__get_fields().items():
-            d[cls.__get_field_key(attr)] = {
+            spec = {
                 'type': field.__class__.__name__,
                 'required': field.required
             }
+            of_type = field.of_type()
+            if of_type:
+                spec['of_type'] = of_type
+            d[cls.__get_field_key(attr)] = spec
         return d

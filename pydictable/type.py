@@ -22,6 +22,9 @@ class Field:
     def validate(self, field_name: str, v):
         pass
 
+    def of_type(self):
+        return
+
 
 class _BaseDictAble:
     def __init__(self, *args, **kwargs):
