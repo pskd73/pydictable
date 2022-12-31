@@ -15,17 +15,17 @@ pip install pydictable
 ```python 
 
 class LatLng(DictAble):
-    lat: int = IntField()
-    lng: int = IntField()
+    lat: int
+    lng: int
 
 
 class Address(DictAble):
-    pin_code: int = IntField()
-    lat_lng: LatLng = ObjectField(LatLng)
+    pin_code: int
+    lat_lng: LatLng
 
 class Person(DictAble):
-    name: str = StrField()
-    address: Address = ObjectField(Address)
+    name: str
+    address: Address
 
 input_dict = {
     'name': 'Pramod',
@@ -60,28 +60,25 @@ p2 = Person(
 p == p2 # shallow equal
 p2.to_dict() == p.to_dict()
 
+# You can get the schema of the modal as well
+Person.get_input_schema()
 ```
 
-### 📜 Fields
-##### StrField
-##### IntField
-##### FloatField
-##### DictField
-##### DatetimeField
-##### ObjectField
-```
-__init__(self, obj_type: Type[DictAble])
-```
-##### ListField
-```
-__init__(self, obj_type: Field)
-```
-##### MultiTypeField
+### 📜 Supported types
+- str
+- int
+- float
+- datetime
+- Optional
+- Union
+- DictAble
+- list
+- MultiTypeField
 ```
 __init__(self, types: List[Type[DictAble]])
 ```
 
-##### DictValueField
+- DictValueField
 ```
 __init__(self, dictable_value: Type[DictAble])
 ```
