@@ -515,12 +515,24 @@ class TestCore(TestCase):
                                 'gaps': {
                                     'type': 'ListField',
                                     'required': True,
-                                    'of': 'IntField'
+                                    'of': {
+                                        'type': 'IntField',
+                                        'required': True,
+                                    }
                                 },
                                 'id': {
                                     'type': 'UnionField',
                                     'required': True,
-                                    'of': ['IntField', 'StrField']
+                                    'of': [
+                                        {
+                                            'type': 'IntField',
+                                            'required': True,
+                                        },
+                                        {
+                                            'type': 'StrField',
+                                            'required': True,
+                                        }
+                                    ]
                                 }
                             }
                         }

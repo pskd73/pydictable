@@ -23,7 +23,17 @@ class Field:
         pass
 
     def of(self):
-        return
+        pass
+
+    def spec(self) -> dict:
+        spec = {
+            'type': self.__class__.__name__,
+            'required': self.required
+        }
+        of = self.of()
+        if of:
+            spec['of'] = of
+        return spec
 
 
 class _BaseDictAble:
