@@ -47,7 +47,7 @@ class DictAble(_BaseDictAble):
         if issubclass(type_hint, _BaseDictAble):
             return ObjectField(type_hint, required=True)
         if issubclass(type_hint, Enum):
-            return EnumField(type_hint, required=True)
+            return EnumField(type_hint, required=True, is_name=True)
         raise NotImplementedError(f'Unsupported type hint {type_hint}')
 
     @classmethod

@@ -550,12 +550,12 @@ class TestCore(TestCase):
         class Customer(DictAble):
             type: CustomerType
 
-        self.assertEqual(Customer(dict={'type': 'reg'}).type, CustomerType.regular)
-        self.assertEqual(Customer(dict={'type': 3}).type, CustomerType.vip)
+        self.assertEqual(Customer(dict={'type': 'regular'}).type, CustomerType.regular)
+        self.assertEqual(Customer(dict={'type': 'vip'}).type, CustomerType.vip)
         self.assertEqual(Customer(type=CustomerType.premium).type, CustomerType.premium)
         self.assertRaises(DataValidationError, lambda: Customer())
 
-        self.assertEqual(Customer.get_input_spec(), {'type': {'type': 'EnumField', 'required': True, 'of': ['reg', 'pre', 3]}})
+        self.assertEqual(Customer.get_input_spec(), {'type': {'type': 'EnumField', 'required': True, 'of': ['regular', 'premium', 'vip']}})
 
     def test_datetime_with_type_hints(self):
         class User(DictAble):

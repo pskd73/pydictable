@@ -167,27 +167,28 @@ class MultiTypeField(CustomField):
 
 
 class EnumField(Field):
-    def __init__(self, enum: EnumMeta, *args, **kwargs):
+    def __init__(self, enum: EnumMeta, is_name: bool = False, *args, **kwargs):
         super(EnumField, self).__init__(*args, **kwargs)
         self.enum = enum
+        self.is_name = is_name
 
     def from_dict(self, v):
-        return self.enum(v)
+        return self.enum[v] if self.is_name else self.enum(v)
 
     def to_dict(self, v):
         return v.value
 
     def validate_dict(self, field_name: str, v):
         try:
-            self.enum(v)
+            self.enum[v] if self.is_name else self.enum(v)
         except ValueError as e:
-            raise AssertionError('Invalid value')
+            raise AssertionError('Invalid enum')
 
     def validate(self, field_name: str, v):
         assert isinstance(v, Enum)
 
     def of(self):
-        return [e.value for e in self.enum]
+        return [e.name if self.is_name else e.value for e in self.enum]
 
 
 class DictField(Field):
