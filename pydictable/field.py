@@ -101,7 +101,7 @@ class ObjectField(Field):
     def validate(self, field_name: str, v):
         assert isinstance(v, _BaseDictAble)
 
-    def of_type(self):
+    def of(self):
         return self.obj_type.get_input_spec()
 
 
@@ -128,7 +128,7 @@ class ListField(Field):
         assert type(v) == list
         [self.obj_type.validate(field_name, x) for x in v]
 
-    def of_type(self):
+    def of(self):
         return self.obj_type.__class__.__name__
 
 
@@ -185,6 +185,9 @@ class EnumField(Field):
 
     def validate(self, field_name: str, v):
         assert isinstance(v, Enum)
+
+    def of(self):
+        return [e.value for e in self.enum]
 
 
 class DictField(Field):
@@ -263,7 +266,7 @@ class UnionField(Field):
                 pass
         raise AssertionError(f'{v} does not match for any of {list(self.fields_dict.keys())}')
 
-    def of_type(self):
+    def of(self):
         return [f for f in self.fields_dict.keys()]
 
 
