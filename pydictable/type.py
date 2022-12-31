@@ -23,7 +23,7 @@ class Field:
         pass
 
     def of(self):
-        pass
+        return
 
     def spec(self) -> dict:
         spec = {
