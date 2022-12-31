@@ -22,7 +22,7 @@ class Field:
     def validate(self, field_name: str, v):
         pass
 
-    def of_type(self):
+    def of(self):
         return
 
 

@@ -1,8 +1,10 @@
 import inspect
+from datetime import datetime
+from enum import Enum
 from typing import Dict, get_type_hints, Optional, Union, List
 
 from pydictable.field import StrField, IntField, FloatField, BoolField, ListField, MultiTypeField, UnionField, \
-    NoneField, ObjectField, DataValidationError
+    NoneField, ObjectField, DataValidationError, EnumField, DatetimeField
 from pydictable.type import _BaseDictAble, Field
 
 
@@ -11,7 +13,8 @@ TYPE_TO_FIELD = {
     int: IntField,
     float: FloatField,
     bool: BoolField,
-    type(None): NoneField
+    type(None): NoneField,
+    datetime: DatetimeField
 }
 
 
@@ -34,15 +37,17 @@ class DictAble(_BaseDictAble):
     def __get_field_by_type_hint(cls, type_hint):
         if type_hint in TYPE_TO_FIELD:
             return TYPE_TO_FIELD[type_hint](required=True)
-        elif '__origin__' in type_hint.__dict__ and type_hint.__origin__ == Union:
+        if '__origin__' in type_hint.__dict__ and type_hint.__origin__ == Union:
             sub_types = []
             for sub_type in type_hint.__args__:
                 sub_types.append(cls.__get_field_by_type_hint(sub_type))
             return UnionField(sub_types, required=True)
-        elif '__origin__' in type_hint.__dict__ and type_hint.__origin__ == list:
+        if '__origin__' in type_hint.__dict__ and type_hint.__origin__ == list:
             return ListField(cls.__get_field_by_type_hint(type_hint.__args__[0]), required=True)
-        elif issubclass(type_hint, _BaseDictAble):
+        if issubclass(type_hint, _BaseDictAble):
             return ObjectField(type_hint, required=True)
+        if issubclass(type_hint, Enum):
+            return EnumField(type_hint, required=True)
         raise NotImplementedError(f'Unsupported type hint {type_hint}')
 
     @classmethod
@@ -107,8 +112,8 @@ class DictAble(_BaseDictAble):
                 'type': field.__class__.__name__,
                 'required': field.required
             }
-            of_type = field.of_type()
-            if of_type:
-                spec['of_type'] = of_type
+            of = field.of()
+            if of:
+                spec['of'] = of
             d[cls.__get_field_key(attr)] = spec
         return d

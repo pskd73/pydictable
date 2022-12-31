@@ -495,7 +495,7 @@ class TestCore(TestCase):
                 'avatar': {
                     'type': 'ObjectField',
                     'required': True,
-                    'of_type': {
+                    'of': {
                         'url': {
                             'type': 'StrField',
                             'required': True,
@@ -503,7 +503,7 @@ class TestCore(TestCase):
                         'size': {
                             'type': 'ObjectField',
                             'required': True,
-                            'of_type': {
+                            'of': {
                                 'h': {
                                     'type': 'FloatField',
                                     'required': True,
@@ -515,12 +515,12 @@ class TestCore(TestCase):
                                 'gaps': {
                                     'type': 'ListField',
                                     'required': True,
-                                    'of_type': 'IntField'
+                                    'of': 'IntField'
                                 },
                                 'id': {
                                     'type': 'UnionField',
                                     'required': True,
-                                    'of_type': ['IntField', 'StrField']
+                                    'of': ['IntField', 'StrField']
                                 }
                             }
                         }
@@ -528,3 +528,28 @@ class TestCore(TestCase):
                 }
             }
         )
+
+    def test_enum_with_type_hints(self):
+        class CustomerType(Enum):
+            regular = 'reg'
+            premium = 'pre'
+            vip = 3
+
+        class Customer(DictAble):
+            type: CustomerType
+
+        self.assertEqual(Customer(dict={'type': 'reg'}).type, CustomerType.regular)
+        self.assertEqual(Customer(dict={'type': 3}).type, CustomerType.vip)
+        self.assertEqual(Customer(type=CustomerType.premium).type, CustomerType.premium)
+        self.assertRaises(DataValidationError, lambda: Customer())
+
+        self.assertEqual(Customer.get_input_spec(), {'type': {'type': 'EnumField', 'required': True, 'of': ['reg', 'pre', 3]}})
+
+    def test_datetime_with_type_hints(self):
+        class User(DictAble):
+            dob: datetime
+
+        self.assertEqual(User(dob=datetime(2022, 12, 31)).dob, datetime(2022, 12, 31))
+        self.assertEqual(User(dob=datetime(2022, 12, 31)).to_dict()['dob'], 1672425000000)
+        self.assertEqual(User(dict={'dob': 1672425000000}).dob, datetime(2022, 12, 31))
+        self.assertEqual(User.get_input_spec(), {'dob': {'type': 'DatetimeField', 'required': True}})
