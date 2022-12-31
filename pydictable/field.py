@@ -129,7 +129,7 @@ class ListField(Field):
         [self.obj_type.validate(field_name, x) for x in v]
 
     def of(self):
-        return self.obj_type.__class__.__name__
+        return self.obj_type.spec()
 
 
 class CustomField(Field, ABC):
@@ -267,7 +267,7 @@ class UnionField(Field):
         raise AssertionError(f'{v} does not match for any of {list(self.fields_dict.keys())}')
 
     def of(self):
-        return [f for f in self.fields_dict.keys()]
+        return [f.spec() for f in self.fields_dict.values()]
 
 
 class NoneField(Field):

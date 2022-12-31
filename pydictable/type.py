@@ -25,6 +25,16 @@ class Field:
     def of(self):
         return
 
+    def spec(self) -> dict:
+        spec = {
+            'type': self.__class__.__name__,
+            'required': self.required
+        }
+        of = self.of()
+        if of:
+            spec['of'] = of
+        return spec
+
 
 class _BaseDictAble:
     def __init__(self, *args, **kwargs):

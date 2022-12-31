@@ -108,12 +108,5 @@ class DictAble(_BaseDictAble):
     def get_input_spec(cls) -> dict:
         d = {}
         for attr, field in cls.__get_fields().items():
-            spec = {
-                'type': field.__class__.__name__,
-                'required': field.required
-            }
-            of = field.of()
-            if of:
-                spec['of'] = of
-            d[cls.__get_field_key(attr)] = spec
+            d[cls.__get_field_key(attr)] = field.spec()
         return d
