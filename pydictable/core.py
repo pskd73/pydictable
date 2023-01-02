@@ -83,8 +83,8 @@ class DictAble(_BaseDictAble):
                 field.validate_dict(attr, value)
             except DataValidationError as e:
                 raise DataValidationError(f'{attr}.{e.path}', e.err)
-            except AssertionError:
-                raise DataValidationError(attr, 'Pre check failed. Invalid value "{}" for field "{}"'.format(value, attr))
+            except AssertionError as e:
+                raise DataValidationError(attr, f'Pre check failed: {str(e)}')
 
     def __validate(self):
         for attr, field in self.__get_fields().items():
