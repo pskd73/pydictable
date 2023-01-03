@@ -183,13 +183,25 @@ class TestCore(TestCase):
                 super().validate_dict(field_name, v)
                 assert len(str(v)) == 13, "Length should be 13"
 
+        class PanField(StrField):
+            def validate_dict(self, field_name: str, v):
+                super().validate_dict(field_name, v)
+                assert len(v) == 10
+
         class User(DictAble):
             dob: int = DateMillisField(required=True)
+            pan: str = PanField(required=True)
 
         try:
-            User(dict={'dob': 3456788})
+            User(dict={'dob': 3456788, 'pan': 'BKEPS9876L'})
         except DataValidationError as e:
             self.assertEqual(e.err, 'Pre check failed: Length should be 13')
+
+        try:
+            User(dict={'dob': 1672724424703, 'pan': 'BKSFER'})
+        except DataValidationError as e:
+            print(str(e))
+            self.assertEqual(e.err, 'Pre check failed: Invalid value BKSFER for field pan')
 
     def test_optional(self):
         class Car(DictAble):
