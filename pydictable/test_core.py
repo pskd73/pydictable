@@ -200,7 +200,6 @@ class TestCore(TestCase):
         try:
             User(dict={'dob': 1672724424703, 'pan': 'BKSFER'})
         except DataValidationError as e:
-            print(str(e))
             self.assertEqual(e.err, 'Pre check failed: Invalid value BKSFER for field pan')
 
     def test_optional(self):
