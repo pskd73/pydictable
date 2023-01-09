@@ -7,7 +7,6 @@ from pydictable.field import StrField, IntField, FloatField, BoolField, ListFiel
     NoneField, ObjectField, DataValidationError, EnumField, DatetimeField
 from pydictable.type import _BaseDictAble, Field
 
-
 TYPE_TO_FIELD = {
     str: StrField,
     int: IntField,
@@ -83,8 +82,10 @@ class DictAble(_BaseDictAble):
                 field.validate_dict(attr, value)
             except DataValidationError as e:
                 raise DataValidationError(f'{attr}.{e.path}', e.err)
-            except AssertionError:
-                raise DataValidationError(attr, 'Pre check failed. Invalid value "{}" for field "{}"'.format(value, attr))
+            except AssertionError as e:
+                if len(e.args) > 0:
+                    raise DataValidationError(attr, f'Pre check failed: {str(e)}')
+                raise DataValidationError(attr, f'Pre check failed: Invalid value {value} for field {attr}')
 
     def __validate(self):
         for attr, field in self.__get_fields().items():
@@ -96,7 +97,8 @@ class DictAble(_BaseDictAble):
             except DataValidationError as e:
                 raise DataValidationError(f'{attr}.{e.path}', e.err)
             except AssertionError:
-                raise DataValidationError(attr, 'Post check failed. Invalid value "{}" for field "{}"'.format(value, attr))
+                raise DataValidationError(attr,
+                                          'Post check failed. Invalid value "{}" for field "{}"'.format(value, attr))
 
     def to_dict(self) -> dict:
         d = {}

@@ -17,6 +17,7 @@ class TestCore(TestCase):
         class Address(DictAble):
             pin_code: int = IntField()
             street: str = StrField()
+
         input_dict = {'pin_code': 560032, 'street': 'RT Nagar'}
         address = Address(dict=input_dict)
         self.assertEqual(address.pin_code, 560032)
@@ -177,6 +178,30 @@ class TestCore(TestCase):
         )
         self.assertEqual(g.to_dict()['cars'][0]['__type'], 'CarA')
 
+        class DateMillisField(IntField):
+            def validate_dict(self, field_name: str, v):
+                super().validate_dict(field_name, v)
+                assert len(str(v)) == 13, "Length should be 13"
+
+        class PanField(StrField):
+            def validate_dict(self, field_name: str, v):
+                super().validate_dict(field_name, v)
+                assert len(v) == 10
+
+        class User(DictAble):
+            dob: int = DateMillisField(required=True)
+            pan: str = PanField(required=True)
+
+        try:
+            User(dict={'dob': 3456788, 'pan': 'BKEPS9876L'})
+        except DataValidationError as e:
+            self.assertEqual(e.err, 'Pre check failed: Length should be 13')
+
+        try:
+            User(dict={'dob': 1672724424703, 'pan': 'BKSFER'})
+        except DataValidationError as e:
+            self.assertEqual(e.err, 'Pre check failed: Invalid value BKSFER for field pan')
+
     def test_optional(self):
         class Car(DictAble):
             name: str = StrField(required=True)
@@ -189,6 +214,7 @@ class TestCore(TestCase):
 
         class Car(DictAble):
             no_of_gears: int = IntField(required=True)
+
         try:
             Car()
         except DataValidationError as e:
@@ -286,6 +312,7 @@ class TestCore(TestCase):
     def test_pre_post_validate(self):
         class User(DictAble):
             meta: dict = DictField(required=True)
+
         self.assertRaises(DataValidationError, lambda: User())
         self.assertRaises(DataValidationError, lambda: User(meta=3))
         User(meta={})
@@ -414,7 +441,10 @@ class TestCore(TestCase):
             avatar: Avatar
 
         try:
-            User(dict={'name': 'Pramod', 'avatar': {'url': 'some', 'size': {'h': 2.3, 'w': 1.4, 'gaps': [3, 4], 'id': 2.2}}})
+            User(dict={
+                'name': 'Pramod',
+                'avatar': {'url': 'some', 'size': {'h': 2.3, 'w': 1.4, 'gaps': [3, 4], 'id': 2.2}}
+            })
             raise AssertionError('It should fail')
         except DataValidationError as e:
             self.assertEqual(e.path, 'avatar.size.id')
@@ -555,7 +585,10 @@ class TestCore(TestCase):
         self.assertEqual(Customer(type=CustomerType.premium).type, CustomerType.premium)
         self.assertRaises(DataValidationError, lambda: Customer())
 
-        self.assertEqual(Customer.get_input_spec(), {'type': {'type': 'EnumField', 'required': True, 'of': ['regular', 'premium', 'vip']}})
+        self.assertEqual(
+            Customer.get_input_spec(),
+            {'type': {'type': 'EnumField', 'required': True, 'of': ['regular', 'premium', 'vip']}}
+        )
 
     def test_datetime_with_type_hints(self):
         class User(DictAble):
