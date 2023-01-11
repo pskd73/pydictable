@@ -644,3 +644,17 @@ class TestCore(TestCase):
         self.assertEqual(email.to, 'testing@gmail.com')
         self.assertEqual(email.subject, 'Issue')
         self.assertEqual(email.body, 'Hello')
+
+        class UserInfo(DictAble):
+            name: str = StrField(required=True, default=123)
+            dob: int = DateMillisField(default="1673442076263")
+
+        try:
+            UserInfo(dict={'name': 'Pramod'})
+        except DataValidationError as e:
+            self.assertEqual(e.err, 'Pre check failed: Invalid value 1673442076263 for field dob')
+
+        try:
+            UserInfo(dict={'dob': 1673442076263})
+        except DataValidationError as e:
+            self.assertEqual(e.err, 'Pre check failed: Invalid value 123 for field name')
