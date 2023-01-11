@@ -598,3 +598,49 @@ class TestCore(TestCase):
         self.assertEqual(User(dob=datetime(2022, 12, 31)).to_dict()['dob'], 1672425000000)
         self.assertEqual(User(dict={'dob': 1672425000000}).dob, datetime(2022, 12, 31))
         self.assertEqual(User.get_input_spec(), {'dob': {'type': 'DatetimeField', 'required': True}})
+
+    def test_default_value(self):
+        class Address(DictAble):
+            pin_code: int = IntField(default=560090)
+            street: str = StrField()
+
+        input_dict = {'street': 'RT Nagar'}
+        address = Address(dict=input_dict)
+        self.assertEqual(address.pin_code, 560090)
+        self.assertEqual(address.street, 'RT Nagar')
+
+        input_dict = {'pin_code': 560081, 'street': 'RT Nagar'}
+        address = Address(dict=input_dict)
+        self.assertEqual(address.pin_code, 560081)
+        self.assertEqual(address.street, 'RT Nagar')
+
+        class DateMillisField(IntField):
+            def validate_dict(self, field_name: str, v):
+                super().validate_dict(field_name, v)
+                assert len(str(v)) == 13, "Length should be 13"
+
+        class User(DictAble):
+            name: str = StrField(required=True)
+            time_stamp: int = DateMillisField(default=1673442076263)
+
+        input_dict = {'name': 'Pramod'}
+        user = User(dict=input_dict)
+        self.assertEqual(user.name, 'Pramod')
+        self.assertEqual(user.time_stamp, 1673442076263)
+
+        class Email(DictAble):
+            to: str = StrField(required=True)
+            subject: str = StrField(required=True, default="General inquiry")
+            body: str = StrField(required=True)
+
+        input_dict = {'to': 'testing@gmail.com', 'body': "Hello"}
+        email = Email(dict=input_dict)
+        self.assertEqual(email.to, 'testing@gmail.com')
+        self.assertEqual(email.subject, 'General inquiry')
+        self.assertEqual(email.body, 'Hello')
+
+        input_dict = {'to': 'testing@gmail.com', 'subject': 'Issue', 'body': "Hello"}
+        email = Email(dict=input_dict)
+        self.assertEqual(email.to, 'testing@gmail.com')
+        self.assertEqual(email.subject, 'Issue')
+        self.assertEqual(email.body, 'Hello')
