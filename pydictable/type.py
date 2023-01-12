@@ -1,10 +1,12 @@
 from abc import abstractmethod
+from typing import Any
 
 
 class Field:
-    def __init__(self, required: bool = False, key: str = None):
+    def __init__(self, required: bool = False, key: str = None, default: Any = None):
         self.required = required
         self.key = key
+        self.default = default
 
     @abstractmethod
     def from_dict(self, v):

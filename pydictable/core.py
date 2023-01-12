@@ -71,11 +71,11 @@ class DictAble(_BaseDictAble):
 
     def __apply_dict(self, d: dict):
         for attr, field in self.__class__.__get_fields().items():
-            self.__setattr__(attr, field.from_dict(d.get(self.__get_field_key(attr))))
+            self.__setattr__(attr, field.from_dict(d.get(self.__get_field_key(attr), field.default)))
 
     def __validate_dict(self, raw_values: dict):
         for attr, field in self.__get_fields().items():
-            value = raw_values.get(self.__get_field_key(attr))
+            value = raw_values.get(self.__get_field_key(attr), field.default)
             if value is None and not field.required:
                 continue
             try:
