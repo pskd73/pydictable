@@ -119,13 +119,3 @@ class DictAble(_BaseDictAble):
         for attr, field in cls.__get_fields().items():
             d[cls.__get_field_key(attr)] = field.spec()
         return d
-
-
-if __name__ == '__main__':
-    class Address(DictAble):
-        pin_code: int = IntField()
-        street: str = StrField()
-
-
-    input_dict = {'pin_code': 560032, 'street': 'RT Nagar'}
-    address = Address(dict=input_dict)
