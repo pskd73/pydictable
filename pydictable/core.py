@@ -1,7 +1,8 @@
 import inspect
 from datetime import datetime
 from enum import Enum
-from typing import Dict, get_type_hints, Optional, Union, List
+from itertools import chain
+from typing import Dict, get_type_hints, Union
 
 from pydictable.field import StrField, IntField, FloatField, BoolField, ListField, MultiTypeField, UnionField, \
     NoneField, ObjectField, DataValidationError, EnumField, DatetimeField
@@ -70,8 +71,14 @@ class DictAble(_BaseDictAble):
             self.__setattr__(attr, None)
 
     def __apply_dict(self, d: dict):
-        for attr, field in self.__class__.__get_fields().items():
-            self.__setattr__(attr, field.from_dict(d.get(self.__get_field_key(attr), field.default)))
+        _updated_attributes = []
+        for attr, field in chain(self.__class__.__get_fields().items(), d.items()):
+            if isinstance(field, Field):
+                self.__setattr__(attr, field.from_dict(d.get(self.__get_field_key(attr), field.default)))
+                _updated_attributes.append(self.__get_field_key(attr))
+                continue
+            if attr not in _updated_attributes:
+                self.__setattr__(attr, field)
 
     def __validate_dict(self, raw_values: dict):
         for attr, field in self.__get_fields().items():
@@ -112,3 +119,13 @@ class DictAble(_BaseDictAble):
         for attr, field in cls.__get_fields().items():
             d[cls.__get_field_key(attr)] = field.spec()
         return d
+
+
+if __name__ == '__main__':
+    class Address(DictAble):
+        pin_code: int = IntField()
+        street: str = StrField()
+
+
+    input_dict = {'pin_code': 560032, 'street': 'RT Nagar'}
+    address = Address(dict=input_dict)
