@@ -676,10 +676,11 @@ class TestCore(TestCase):
             subject: str = StrField(required=True, default="General inquiry")
             body: str = StrField(required=True)
 
-        input_dict = {'to_email': 'testing@gmail.com', 'body': 'Hello', 'cc': 'testing1@gmail.com'}
+        input_dict = {'to_email': 'testing@gmail.com', 'body': 'Hello', 'cc': 'testing1@gmail.com', 'bcc': 't@test.com'}
         email = Email(dict=input_dict)
         self.assertEqual(email.to, 'testing@gmail.com')
         self.assertEqual(email.subject, 'General inquiry')
         self.assertEqual(email.body, 'Hello')
         self.assertEqual(email.cc, 'testing1@gmail.com')
-        self.assertEqual(len(email.to_dict()), 4)
+        self.assertEqual(email.bcc, 't@test.com')
+        self.assertEqual(len(email.to_dict()), 5)
