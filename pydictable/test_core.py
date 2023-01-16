@@ -658,3 +658,29 @@ class TestCore(TestCase):
             UserInfo(dict={'dob': 1673442076263})
         except DataValidationError as e:
             self.assertEqual(e.err, 'Pre check failed: Invalid value 123 for field name')
+
+    def test_return_all_input_dict_fields(self):
+        class Address(DictAble):
+            pin_code: int = IntField(default=560090)
+            street: str = StrField()
+
+        input_dict = {'street': 'RT Nagar', 'city': 'Bengaluru'}
+        address = Address(dict=input_dict)
+        self.assertEqual(address.pin_code, 560090)
+        self.assertEqual(address.street, 'RT Nagar')
+        self.assertEqual(address.city, 'Bengaluru')
+        self.assertEqual(len(address.to_dict()), 3)
+
+        class Email(DictAble):
+            to: str = StrField(required=True, key='to_email')
+            subject: str = StrField(required=True, default="General inquiry")
+            body: str = StrField(required=True)
+
+        input_dict = {'to_email': 'testing@gmail.com', 'body': 'Hello', 'cc': 'testing1@gmail.com', 'bcc': 't@test.com'}
+        email = Email(dict=input_dict)
+        self.assertEqual(email.to, 'testing@gmail.com')
+        self.assertEqual(email.subject, 'General inquiry')
+        self.assertEqual(email.body, 'Hello')
+        self.assertEqual(email.cc, 'testing1@gmail.com')
+        self.assertEqual(email.bcc, 't@test.com')
+        self.assertEqual(len(email.to_dict()), 5)
