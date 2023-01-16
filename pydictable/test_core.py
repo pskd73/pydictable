@@ -223,8 +223,7 @@ class TestCore(TestCase):
     def test_custom_attr(self):
         d = {
             '_id': 1,
-            'person_name': 'Pramod',
-            'test': 'test'
+            'person_name': 'Pramod'
         }
 
         class Person(DictAble):
