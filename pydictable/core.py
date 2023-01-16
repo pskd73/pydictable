@@ -109,8 +109,14 @@ class DictAble(_BaseDictAble):
 
     def to_dict(self) -> dict:
         d = {}
-        for attr, field in self.__class__.__get_fields().items():
-            d[self.__get_field_key(attr)] = field.to_dict(self.__getattribute__(attr))
+        _updated_attributes = []
+        for attr, field in chain(self.__class__.__get_fields().items(), self.__dict__.items()):
+            if isinstance(field, Field):
+                d[self.__get_field_key(attr)] = field.to_dict(self.__getattribute__(attr))
+                _updated_attributes.append(attr)
+                continue
+            if attr not in _updated_attributes:
+                d[attr] = field
         return d
 
     @classmethod
