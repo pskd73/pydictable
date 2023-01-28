@@ -183,6 +183,8 @@ class EnumField(Field):
             self.enum[v] if self.is_name else self.enum(v)
         except ValueError as e:
             raise AssertionError('Invalid enum')
+        except KeyError as e:
+            raise AssertionError(f'Invalid key {e} for {self.enum.__name__}')
 
     def validate(self, field_name: str, v):
         assert isinstance(v, Enum)
