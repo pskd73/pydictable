@@ -251,7 +251,7 @@ class TestCore(TestCase):
 
         class Employee(DictAble):
             id: int = IntField(required=True, key='emp_id')
-            type: EmployeeType = EnumField(EmployeeType)
+            type: EmployeeType
             roles: List[EmployeeType] = ListField(EnumField(EmployeeType))
 
         e = Employee(dict=d)
@@ -267,6 +267,16 @@ class TestCore(TestCase):
             'roles': ['ADMIN', 'MANAGER', 4]
         }
         self.assertRaises(DataValidationError, lambda: Employee(dict=d))
+        d = {
+            'emp_id': 23,
+            'type': 'TESTER',
+            'roles': ['ADMIN', 'MANAGER', 2]
+        }
+        try:
+            Employee(dict=d)
+        except DataValidationError as e:
+            self.assertEqual(e.path, 'type')
+            self.assertEqual(e.err, "Pre check failed: Invalid key 'TESTER' for EmployeeType")
 
     def test_datetime(self):
         class User(DictAble):
