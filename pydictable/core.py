@@ -7,7 +7,6 @@ from pydictable.field import StrField, IntField, FloatField, BoolField, ListFiel
     ObjectField, DataValidationError, EnumField, DatetimeField
 from pydictable.type import _BaseDictAble, Field
 
-
 TYPE_TO_FIELD = {
     str: StrField,
     int: IntField,
