@@ -1,10 +1,10 @@
 import inspect
 from datetime import datetime
 from enum import Enum
-from typing import Dict, get_type_hints, Optional, Union, List
+from typing import Dict, get_type_hints, Union
 
-from pydictable.field import StrField, IntField, FloatField, BoolField, ListField, MultiTypeField, UnionField, \
-    NoneField, ObjectField, DataValidationError, EnumField, DatetimeField
+from pydictable.field import StrField, IntField, FloatField, BoolField, ListField, DictField, UnionField, NoneField, \
+    ObjectField, DataValidationError, EnumField, DatetimeField
 from pydictable.type import _BaseDictAble, Field
 
 TYPE_TO_FIELD = {
@@ -12,6 +12,7 @@ TYPE_TO_FIELD = {
     int: IntField,
     float: FloatField,
     bool: BoolField,
+    dict: DictField,
     type(None): NoneField,
     datetime: DatetimeField
 }
