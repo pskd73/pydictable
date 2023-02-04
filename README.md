@@ -1,4 +1,6 @@
 # pydictable
+![Coverage](./reports/coverage/badge.svg)
+
 A pure python, zero dependency solution for 
 1. Schema (json/dict) validation
 2. Serialize/Deserialize to json
