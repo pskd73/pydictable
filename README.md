@@ -91,13 +91,13 @@ class Human(DictAble):
 human = Human(dict={
     'species': {
         'name': 'Mufasa',
-        'words_spoken': 9999999,
+        'words_spoken': 1024,
         '__type': 'Sapien'
     }
 })
 assert human.species.name == 'Mufasa'
 assert isinstance(human.species, Sapien)
-assert human.species.words_spoken == 9999999
+assert human.species.words_spoken == 1024
 ```
 
 Feel free to report bugs or push changes! Cheers!

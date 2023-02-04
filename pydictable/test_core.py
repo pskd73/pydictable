@@ -685,13 +685,13 @@ class TestCore(TestCase):
         human = Human(dict={
             'species': {
                 'name': 'Mufasa',
-                'words_spoken': 9999999,
+                'words_spoken': 1024,
                 '__type': 'Sapien'
             }
         })
         self.assertEqual(human.species.name, 'Mufasa')
         self.assertTrue(isinstance(human.species, Sapien))
         assert isinstance(human.species, Sapien)
-        self.assertEqual(human.species.words_spoken, 9999999)
+        self.assertEqual(human.species.words_spoken, 1024)
 
 
