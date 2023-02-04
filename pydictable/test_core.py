@@ -668,3 +668,30 @@ class TestCore(TestCase):
             UserInfo(dict={'dob': 1673442076263})
         except DataValidationError as e:
             self.assertEqual(e.err, 'Pre check failed: Invalid value 123 for field name')
+
+    def test_polymorphism(self):
+        class Homo(DictAble):
+            name: str
+
+        class Neanderthal(Homo):
+            animals_killed: int
+
+        class Sapien(Homo):
+            words_spoken: int
+
+        class Human(DictAble):
+            species: Homo = MultiTypeField([Neanderthal, Sapien])
+
+        human = Human(dict={
+            'species': {
+                'name': 'Mufasa',
+                'words_spoken': 1024,
+                '__type': 'Sapien'
+            }
+        })
+        self.assertEqual(human.species.name, 'Mufasa')
+        self.assertTrue(isinstance(human.species, Sapien))
+        assert isinstance(human.species, Sapien)
+        self.assertEqual(human.species.words_spoken, 1024)
+
+

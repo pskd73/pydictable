@@ -73,4 +73,31 @@ class Person(DictAble):
 Person(dict={'age': -1}) # Raises DataValidationError
 ```
 
+### Polymorphism
+Auto converts multiple types
+```python
+class Homo(DictAble):
+    name: str
+
+class Neanderthal(Homo):
+    animals_killed: int
+
+class Sapien(Homo):
+    words_spoken: int
+
+class Human(DictAble):
+    species: Homo = MultiTypeField([Neanderthal, Sapien])
+
+human = Human(dict={
+    'species': {
+        'name': 'Mufasa',
+        'words_spoken': 1024,
+        '__type': 'Sapien'
+    }
+})
+assert human.species.name == 'Mufasa'
+assert isinstance(human.species, Sapien)
+assert human.species.words_spoken == 1024
+```
+
 Feel free to report bugs or push changes! Cheers!
