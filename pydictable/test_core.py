@@ -694,4 +694,8 @@ class TestCore(TestCase):
         assert isinstance(human.species, Sapien)
         self.assertEqual(human.species.words_spoken, 1024)
 
+    def test_optional_field_spec(self):
+        class Person(DictAble):
+            name: Optional[str]
 
+        self.assertEqual(Person.get_input_spec(), {'name': {'type': 'StrField', 'required': False}})

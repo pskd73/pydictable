@@ -41,6 +41,13 @@ class DictAble(_BaseDictAble):
             sub_types = []
             for sub_type in type_hint.__args__:
                 sub_types.append(cls.__get_field_by_type_hint(sub_type))
+
+            if len(sub_types) == 2 and len([t for t in sub_types if type(t) == NoneField]):
+                for sub_type in sub_types:
+                    if type(sub_type) != NoneField:
+                        sub_type.required = False
+                        return sub_type
+
             return UnionField(sub_types, required=True)
         if '__origin__' in type_hint.__dict__ and type_hint.__origin__ == list:
             return ListField(cls.__get_field_by_type_hint(type_hint.__args__[0]), required=True)
