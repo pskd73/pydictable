@@ -1,7 +1,7 @@
 from abc import ABC
 from datetime import datetime
 from enum import EnumMeta, Enum
-from typing import Type, List
+from typing import Type, List, Any
 
 from pydictable.type import Field, _BaseDictAble
 
@@ -193,21 +193,10 @@ class EnumField(Field):
         return [e.name if self.is_name else e.value for e in self.enum]
 
 
-class DictField(Field):
-    def from_dict(self, v):
-        return v
-
-    def to_dict(self, v):
-        return v
-
-    def validate_dict(self, field_name: str, v):
-        assert type(v) == dict
-
-    def validate(self, field_name: str, v):
-        assert type(v) == dict
-
-
 class DictValueField(Field):
+    """
+    Deprecated function. Use DictField instead
+    """
     def __init__(self, value_type: Type[_BaseDictAble], required: bool = False, key: str = None):
         self.value_type = value_type
         super(DictValueField, self).__init__(required, key)
@@ -285,3 +274,60 @@ class NoneField(Field):
 
     def validate(self, field_name: str, v):
         assert v is None
+
+
+class AnyField(Field):
+    def from_dict(self, v):
+        return v
+
+    def to_dict(self, v):
+        return v
+
+    def validate_dict(self, field_name: str, v):
+        pass
+
+    def validate(self, field_name: str, v):
+        pass
+
+
+class DictField(Field):
+    def __init__(
+            self,
+            key_type: Field = AnyField(),
+            value_type: Field = AnyField(),
+            required: bool = False,
+            key: str = None,
+            default: Any = None
+    ):
+        super(DictField, self).__init__(required=required, key=key, default=default)
+        self.key_type = key_type
+        self.value_type = value_type
+
+    def from_dict(self, value):
+        return {self.key_type.from_dict(k): self.value_type.from_dict(v) for k, v in value.items()}
+
+    def to_dict(self, value):
+        return {self.key_type.to_dict(k): self.value_type.to_dict(v) for k, v in value.items()}
+
+    def validate_dict(self, field_name: str, value):
+        assert type(value) is dict
+        for k, v in value.items():
+            try:
+                self.key_type.validate_dict(None, k)
+            except AssertionError as e:
+                raise DataValidationError(k, f'Invalid key, {str(e)}')
+            except DataValidationError as e:
+                raise DataValidationError(f'{k}.{e.path}', f'Invalid key, {str(e.err)}')
+
+            try:
+                self.value_type.validate_dict(None, v)
+            except AssertionError as e:
+                raise DataValidationError(k, f'Invalid value')
+            except DataValidationError as e:
+                raise DataValidationError(f'{k}.{e.path}', f'Invalid value, {str(e.err)}')
+
+    def validate(self, field_name: str, value):
+        assert type(value) is dict
+        for k, v in value.items():
+            self.key_type.validate(None, k)
+            self.value_type.validate(None, v)
