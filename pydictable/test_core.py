@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 from enum import Enum
-from typing import List, Dict, Optional, Tuple, Union
+from typing import List, Dict, Optional, Tuple, Union, Any
 from unittest import TestCase
 
 from pydictable.core import DictAble
@@ -47,6 +47,16 @@ class TestCore(TestCase):
         ]})
         self.assertEqual(len(box.messages), 1)
         self.assertEqual(box.messages[0].message, 'Hello!')
+
+        class Block(DictAble):
+            blocks: Optional[list]
+
+        Block(dict={})
+
+        class Block(DictAble):
+            blocks: Optional[List[Any]]
+
+        Block(dict={})
 
     def test_object(self):
         class LatLng(DictAble):

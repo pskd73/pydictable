@@ -1,7 +1,7 @@
 import inspect
 from datetime import datetime
 from enum import Enum
-from typing import Dict, get_type_hints, Union, Type
+from typing import Dict, get_type_hints, Union, Type, Any
 
 from pydictable.field import StrField, IntField, FloatField, BoolField, ListField, UnionField, NoneField, \
     ObjectField, DataValidationError, EnumField, DatetimeField, DictField, AnyField
@@ -14,7 +14,9 @@ TYPE_TO_FIELD = {
     bool: BoolField,
     dict: DictField,
     type(None): NoneField,
-    datetime: DatetimeField
+    list: ListField,
+    datetime: DatetimeField,
+    Any: AnyField
 }
 
 
@@ -64,7 +66,10 @@ class DictAble(_BaseDictAble):
             return UnionField(sub_types, required=True)
 
         if field_type == ListField:
-            return ListField(cls.__get_field_by_type_hint(type_hint.__args__[0]), required=True)
+            of_type = AnyField(required=True)
+            if '__args__' in type_hint.__dict__:
+                of_type = cls.__get_field_by_type_hint(type_hint.__args__[0])
+            return ListField(of_type, required=True)
 
         if field_type == EnumField:
             return EnumField(type_hint, required=True, is_name=True)
