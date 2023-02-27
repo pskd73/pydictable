@@ -1,10 +1,10 @@
 import inspect
 from datetime import datetime
 from enum import Enum
-from typing import Dict, get_type_hints, Union
+from typing import Dict, get_type_hints, Union, Type, Any
 
-from pydictable.field import StrField, IntField, FloatField, BoolField, ListField, DictField, UnionField, NoneField, \
-    ObjectField, DataValidationError, EnumField, DatetimeField
+from pydictable.field import StrField, IntField, FloatField, BoolField, ListField, UnionField, NoneField, \
+    ObjectField, DataValidationError, EnumField, DatetimeField, DictField, AnyField
 from pydictable.type import _BaseDictAble, Field
 
 TYPE_TO_FIELD = {
@@ -14,7 +14,9 @@ TYPE_TO_FIELD = {
     bool: BoolField,
     dict: DictField,
     type(None): NoneField,
-    datetime: DatetimeField
+    list: ListField,
+    datetime: DatetimeField,
+    Any: AnyField
 }
 
 
@@ -34,21 +36,60 @@ class DictAble(_BaseDictAble):
         self.__validate()
 
     @classmethod
-    def __get_field_by_type_hint(cls, type_hint):
+    def __get_field_type_by_type_hint(cls, type_hint) -> Type[Field]:
         if type_hint in TYPE_TO_FIELD:
-            return TYPE_TO_FIELD[type_hint](required=True)
+            return TYPE_TO_FIELD[type_hint]
+
         if '__origin__' in type_hint.__dict__ and type_hint.__origin__ == Union:
+            return UnionField
+
+        if '__origin__' in type_hint.__dict__ and type_hint.__origin__ == list:
+            return ListField
+
+        if '__origin__' in type_hint.__dict__ and type_hint.__origin__ == dict:
+            return DictField
+
+        if issubclass(type_hint, _BaseDictAble):
+            return ObjectField
+        if issubclass(type_hint, Enum):
+            return EnumField
+        raise NotImplementedError(f'Unsupported type hint {type_hint}')
+
+    @classmethod
+    def __get_field_by_type_hint(cls, type_hint):
+        field_type = cls.__get_field_type_by_type_hint(type_hint)
+
+        if field_type == UnionField:
             sub_types = []
             for sub_type in type_hint.__args__:
                 sub_types.append(cls.__get_field_by_type_hint(sub_type))
             return UnionField(sub_types, required=True)
-        if '__origin__' in type_hint.__dict__ and type_hint.__origin__ == list:
-            return ListField(cls.__get_field_by_type_hint(type_hint.__args__[0]), required=True)
-        if issubclass(type_hint, _BaseDictAble):
-            return ObjectField(type_hint, required=True)
-        if issubclass(type_hint, Enum):
+
+        if field_type == ListField:
+            of_type = AnyField(required=True)
+            if '__args__' in type_hint.__dict__:
+                of_type = cls.__get_field_by_type_hint(type_hint.__args__[0])
+            return ListField(of_type, required=True)
+
+        if field_type == EnumField:
             return EnumField(type_hint, required=True, is_name=True)
-        raise NotImplementedError(f'Unsupported type hint {type_hint}')
+
+        if field_type == ObjectField:
+            return ObjectField(type_hint, required=True)
+
+        if field_type == DictField:
+            key_type, value_type = AnyField(required=True), AnyField(required=True)
+            if '__args__' in type_hint.__dict__:
+                key_type = cls.__get_field_by_type_hint(type_hint.__args__[0])
+                value_type = cls.__get_field_by_type_hint(type_hint.__args__[1])
+
+            return DictField(
+                key_type=key_type,
+                value_type=value_type,
+                required=True
+            )
+
+        return field_type(required=True)
 
     @classmethod
     def __get_fields(cls) -> Dict[str, Field]:

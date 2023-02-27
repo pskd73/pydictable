@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 from enum import Enum
-from typing import List, Dict, Optional, Tuple, Union
+from typing import List, Dict, Optional, Tuple, Union, Any
 from unittest import TestCase
 
 from pydictable.core import DictAble
@@ -47,6 +47,16 @@ class TestCore(TestCase):
         ]})
         self.assertEqual(len(box.messages), 1)
         self.assertEqual(box.messages[0].message, 'Hello!')
+
+        class Block(DictAble):
+            blocks: Optional[list]
+
+        Block(dict={})
+
+        class Block(DictAble):
+            blocks: Optional[List[Any]]
+
+        Block(dict={})
 
     def test_object(self):
         class LatLng(DictAble):
@@ -694,4 +704,44 @@ class TestCore(TestCase):
         assert isinstance(human.species, Sapien)
         self.assertEqual(human.species.words_spoken, 1024)
 
+    def test_type_dict(self):
+        class Village(DictAble):
+            people: Dict
 
+        self.assertEqual(Village(dict={'people': {'pramod': 30}}).people['pramod'], 30)
+        self.assertEqual(Village(dict={'people': {1: 30}}).people[1], 30)
+        self.assertEqual(Village(dict={'people': {1: (1, 2)}}).people[1], (1, 2))
+        self.assertRaises(DataValidationError, lambda: Village(dict={'people': 3}))
+
+        class Village(DictAble):
+            people: Dict[str, str]
+
+        self.assertRaises(DataValidationError, lambda: Village(dict={'people': 3}))
+        self.assertRaises(DataValidationError, lambda: Village(dict={'people': {1: 30}}))
+        self.assertEqual(Village(dict={'people': {'pramod': 'Pramod'}}).people['pramod'], 'Pramod')
+
+        class Human(DictAble):
+            age: int
+
+        class Village(DictAble):
+            people: Dict[str, Human]
+
+        village = Village(dict={'people': {'pramod': {'age': 30}}})
+        self.assertEqual(village.people['pramod'].age, 30)
+
+        try:
+            Village(dict={'people': {'pramod': {'age': 'hi'}}})
+            raise AssertionError('Should not have passed!')
+        except DataValidationError as e:
+            self.assertEqual(e.path, 'people.pramod.age')
+
+        try:
+            Village(dict={
+                'people': {
+                    'satyam': {'age': 'hi'},
+                    'pramod': {'age': 30}
+                }
+            })
+            raise AssertionError('Should not have passed!')
+        except DataValidationError as e:
+            self.assertEqual(e.path, 'people.satyam.age')
