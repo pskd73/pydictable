@@ -745,3 +745,18 @@ class TestCore(TestCase):
             raise AssertionError('Should not have passed!')
         except DataValidationError as e:
             self.assertEqual(e.path, 'people.satyam.age')
+
+    def test_nested_optional_list(self):
+        class RefSchema(DictAble):
+            referenceName: str = StrField(required=False)
+
+        class Address(DictAble):
+            location: str
+            references: List[RefSchema] = ListField(ObjectField(RefSchema, required=False), required=False)
+
+        class Profile(DictAble):
+            address: Address = ObjectField(Address)
+
+        profile = Profile(dict={'address': {'location': 'Bengaluru'}})
+        self.assertEqual(profile.address.references, None)
+        self.assertEqual(profile.to_dict(), {'address': {'references': None, 'location': 'Bengaluru'}})
