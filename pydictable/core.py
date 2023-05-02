@@ -113,7 +113,10 @@ class DictAble(_BaseDictAble):
 
     def __apply_dict(self, d: dict):
         for attr, field in self.__class__.__get_fields().items():
-            self.__setattr__(attr, field.from_dict(d.get(self.__get_field_key(attr), field.default)))
+            value = d.get(self.__get_field_key(attr), field.default)
+            if not field.required and value is None:
+                continue
+            self.__setattr__(attr, field.from_dict(value))
 
     def __validate_dict(self, raw_values: dict):
         for attr, field in self.__get_fields().items():
@@ -145,7 +148,11 @@ class DictAble(_BaseDictAble):
     def to_dict(self) -> dict:
         d = {}
         for attr, field in self.__class__.__get_fields().items():
-            d[self.__get_field_key(attr)] = field.to_dict(self.__getattribute__(attr))
+            raw_value = self.__getattribute__(attr)
+            if not field.required and raw_value is None:
+                d[self.__get_field_key(attr)] = None
+                continue
+            d[self.__get_field_key(attr)] = field.to_dict(raw_value)
         return d
 
     @classmethod
