@@ -1,9 +1,9 @@
 from abc import ABC
 from datetime import datetime
 from enum import EnumMeta, Enum
-from typing import Type, List, Any
+from typing import Type, List, Any, Callable
 
-from pydictable.type import Field, _BaseDictAble
+from pydictable.type import Field, _BaseDictAble, DefaultFactoryType
 
 
 class DataValidationError(Exception):
@@ -297,9 +297,10 @@ class DictField(Field):
             value_type: Field = AnyField(),
             required: bool = False,
             key: str = None,
-            default: Any = None
+            default: Any = None,
+            default_factory: DefaultFactoryType = None
     ):
-        super(DictField, self).__init__(required=required, key=key, default=default)
+        super(DictField, self).__init__(required=required, key=key, default=default, default_factory=default_factory)
         self.key_type = key_type
         self.value_type = value_type
 
