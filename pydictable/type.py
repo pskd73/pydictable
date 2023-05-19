@@ -1,12 +1,21 @@
 from abc import abstractmethod
-from typing import Any
+from typing import Any, Callable, Tuple, Optional
+
+DefaultFactoryType = Tuple[Callable, Tuple[Any], dict]
 
 
 class Field:
-    def __init__(self, required: bool = False, key: str = None, default: Any = None):
+    def __init__(
+            self,
+            required: bool = False,
+            key: str = None,
+            default: Any = None,
+            default_factory: DefaultFactoryType = None,
+    ):
         self.required = required
         self.key = key
         self.default = default
+        self.default_factory = default_factory
 
     @abstractmethod
     def from_dict(self, v):

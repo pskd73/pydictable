@@ -7,6 +7,11 @@ from pydictable.field import StrField, IntField, FloatField, BoolField, ListFiel
     ObjectField, DataValidationError, EnumField, DatetimeField, DictField, AnyField
 from pydictable.type import _BaseDictAble, Field
 
+
+class InvalidSchema(Exception):
+    pass
+
+
 TYPE_TO_FIELD = {
     str: StrField,
     int: IntField,
@@ -33,6 +38,7 @@ class DictAble(_BaseDictAble):
             self.__apply_dict(kwargs['dict'])
         if len(args) > 0:
             raise ReferenceError('Use kwargs to init DictAble')
+        self.__set_defaults()
         self.__validate()
 
     @classmethod
@@ -113,7 +119,7 @@ class DictAble(_BaseDictAble):
 
     def __apply_dict(self, d: dict):
         for attr, field in self.__class__.__get_fields().items():
-            value = d.get(self.__get_field_key(attr), field.default)
+            value = d.get(self.__get_field_key(attr))
             if not field.required and value is None:
                 continue
             self.__setattr__(attr, field.from_dict(value))
@@ -144,6 +150,18 @@ class DictAble(_BaseDictAble):
             except AssertionError:
                 raise DataValidationError(attr,
                                           'Post check failed. Invalid value "{}" for field "{}"'.format(value, attr))
+
+    def __set_defaults(self):
+        for attr, field in self.__get_fields().items():
+            if field.required and field.default is not None:
+                raise InvalidSchema(f'Both required and default passed for field {attr}')
+            value = self.__getattribute__(attr)
+            if value is None:
+                if field.default:
+                    self.__setattr__(attr, field.default)
+                elif field.default_factory:
+                    func, args, kwargs = field.default_factory
+                    self.__setattr__(attr, func(*args, **kwargs))
 
     def to_dict(self) -> dict:
         d = {}

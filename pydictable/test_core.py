@@ -1,6 +1,7 @@
 import json
 from datetime import datetime
 from enum import Enum
+from time import sleep
 from typing import List, Dict, Optional, Tuple, Union, Any
 from unittest import TestCase
 
@@ -650,7 +651,7 @@ class TestCore(TestCase):
 
         class Email(DictAble):
             to: str = StrField(required=True)
-            subject: str = StrField(required=True, default="General inquiry")
+            subject: str = StrField(default="General inquiry")
             body: str = StrField(required=True)
 
         input_dict = {'to': 'testing@gmail.com', 'body': "Hello"}
@@ -760,3 +761,42 @@ class TestCore(TestCase):
         profile = Profile(dict={'address': {'location': 'Bengaluru'}})
         self.assertEqual(profile.address.references, None)
         self.assertEqual(profile.to_dict(), {'address': {'references': None, 'location': 'Bengaluru'}})
+
+    def test_dynamic_default(self):
+        now = datetime.now()
+
+        class DOB(DictAble):
+            date: datetime = DatetimeField(default=now)
+
+        self.assertEqual(DOB().date, now)
+        _now = datetime(2023, 5, 19)
+        self.assertEqual(DOB(date=_now).date, _now)
+
+        self.assertEqual(DOB(dict={}).date, now)
+        self.assertEqual(DOB(dict={'date': None}).date, now)
+
+        millis = 1684462306000
+        self.assertEqual(DOB(dict={'date': millis}).date, datetime.fromtimestamp(millis/1000))
+
+        class DOB(DictAble):
+            date: datetime = DatetimeField(default_factory=(datetime.now, (), {}))
+            date_2: datetime = DatetimeField(default=datetime.now())
+
+        self.assertLessEqual((DOB().date - datetime.now()).total_seconds(), 1e2)
+
+        dob1 = DOB()
+        sleep(1)
+        dob2 = DOB()
+
+        self.assertEqual(dob1.date_2, dob2.date_2)
+        self.assertLessEqual((dob2.date - dob1.date).total_seconds(), 1 + 1e2)
+
+        def math(a: int, b: int):
+            return a * b
+
+        class Number(DictAble):
+            num: int = IntField(default_factory=(math, (8,), {'b': 5}))
+
+        self.assertEqual(Number().num, 40)
+        self.assertEqual(Number(dict={'num': None}).num, 40)
+        self.assertEqual(Number(dict={'num': 5}).num, 5)
