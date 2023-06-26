@@ -1,7 +1,9 @@
+import math
+import re
 from abc import ABC
 from datetime import datetime
 from enum import EnumMeta, Enum
-from typing import Type, List, Any, Callable
+from typing import Type, List, Any
 
 from pydictable.type import Field, _BaseDictAble, DefaultFactoryType
 
@@ -84,7 +86,7 @@ class DatetimeField(Field):
 
 
 class ObjectField(Field):
-    def __init__(self, obj_type: Type[_BaseDictAble], required: bool=False):
+    def __init__(self, obj_type: Type[_BaseDictAble], required: bool = False):
         super(ObjectField, self).__init__(required=required)
         self.obj_type = obj_type
 
@@ -136,6 +138,7 @@ class CustomField(Field, ABC):
     """
     For advance usage
     """
+
     def __init__(self, from_json, to_json, *args, **kwargs):
         super(CustomField, self).__init__(*args, **kwargs)
         self._from_json = from_json
@@ -197,6 +200,7 @@ class DictValueField(Field):
     """
     Deprecated function. Use DictField instead
     """
+
     def __init__(self, value_type: Type[_BaseDictAble], required: bool = False, key: str = None):
         self.value_type = value_type
         super(DictValueField, self).__init__(required, key)
@@ -332,3 +336,53 @@ class DictField(Field):
         for k, v in value.items():
             self.key_type.validate(None, k)
             self.value_type.validate(None, v)
+
+
+class RegexField(Field):
+    def __init__(self, regex_string: str, *args, **kwargs):
+        super(RegexField, self).__init__(*args, **kwargs)
+        self.regex_string = regex_string
+
+    def from_dict(self, v):
+        return v
+
+    def to_dict(self, v):
+        return v
+
+    def validate_dict(self, field_name: str, v):
+        try:
+            assert re.match(self.regex_string, v), f"{v} for {field_name} should be in proper format"
+        except AssertionError as e:
+            raise AssertionError(str(e))
+
+    def validate(self, field_name: str, v):
+        assert isinstance(v, str)
+
+    def regex(self):
+        return self.regex_string
+
+
+class RangeField(Field):
+    def __init__(self, min_val: int = 0, max_val: int = math.inf, *args, **kwargs):
+        super(RangeField, self).__init__(*args, **kwargs)
+        self.min_val = min_val
+        self.max_val = max_val
+
+    def from_dict(self, v):
+        return v
+
+    def to_dict(self, v):
+        return v
+
+    def validate_dict(self, field_name: str, v):
+        try:
+            assert self.min_val <= v <= self.max_val, \
+                f"{v} for {field_name} should be in range {self.min_val} to {self.max_val}"
+        except AssertionError as e:
+            raise AssertionError(str(e))
+
+    def validate(self, field_name: str, v):
+        assert isinstance(v, int)
+
+    def range(self):
+        return {'min': self.min_val, 'max': self.max_val}

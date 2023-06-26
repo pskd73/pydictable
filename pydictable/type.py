@@ -36,6 +36,12 @@ class Field:
     def of(self):
         return
 
+    def regex(self):
+        return
+
+    def range(self):
+        return
+
     def spec(self) -> dict:
         spec = {
             'type': self.__class__.__name__,
@@ -44,6 +50,12 @@ class Field:
         of = self.of()
         if of:
             spec['of'] = of
+        regex = self.regex()
+        if regex:
+            spec['regex'] = regex
+        _range = self.range()
+        if _range:
+            spec['range'] = _range
         return spec
 
 

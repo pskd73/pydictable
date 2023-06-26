@@ -1,13 +1,14 @@
 import json
+import math
 from datetime import datetime
 from enum import Enum
 from time import sleep
-from typing import List, Dict, Optional, Tuple, Union, Any
+from typing import List, Dict, Optional, Union, Any
 from unittest import TestCase
 
 from pydictable.core import DictAble
 from pydictable.field import IntField, StrField, ListField, ObjectField, DatetimeField, CustomField, MultiTypeField, \
-    EnumField, DictField, DictValueField, UnionField, DataValidationError
+    EnumField, DictField, DictValueField, UnionField, DataValidationError, RegexField, RangeField
 
 
 class TestCore(TestCase):
@@ -355,8 +356,8 @@ class TestCore(TestCase):
         class User(DictAble):
             pins: Dict[str, Address] = DictValueField(Address)
 
-        u = User(pins={'a': Address(pin='333')})
-        u = User(dict={'pins': {'a': {'pin': '333'}}})
+        User(pins={'a': Address(pin='333')})
+        User(dict={'pins': {'a': {'pin': '333'}}})
 
     def test_union_field(self):
         class User(DictAble):
@@ -800,3 +801,63 @@ class TestCore(TestCase):
         self.assertEqual(Number().num, 40)
         self.assertEqual(Number(dict={'num': None}).num, 40)
         self.assertEqual(Number(dict={'num': 5}).num, 5)
+
+    def test_regex(self):
+        class Profile(DictAble):
+            panNumber: str = RegexField(required=False, regex_string=r"^[A-Z]{5}[0-9]{4}[A-Z]$")
+            email: str = RegexField(regex_string=r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+
+        try:
+            Profile(dict={'email': 'xyz'})
+        except DataValidationError as e:
+            self.assertEqual(e.err, 'Pre check failed: xyz for email should be in proper format')
+
+        try:
+            Profile(dict={'email': 'abc@gmail.com', 'panNumber': '12345'})
+        except DataValidationError as e:
+            self.assertEqual(e.err, 'Pre check failed: 12345 for panNumber should be in proper format')
+
+        profile = Profile(dict={'email': 'abc@gmail.com', 'panNumber': 'ABCDE1234H'})
+
+        self.assertEqual(
+            profile.get_input_spec(),
+            {
+                'email': {
+                    'type': 'RegexField', 'required': False,
+                    'regex': '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$'
+                },
+                'panNumber': {'type': 'RegexField', 'required': False, 'regex': '^[A-Z]{5}[0-9]{4}[A-Z]$'}
+            }
+        )
+
+    def test_range(self):
+        class Profile(DictAble):
+            salary: int = RangeField(required=False, max_val=100000, min_val=1000)
+            expenses: int = RangeField(required=False, max_val=10000)
+            donation: int = RangeField(required=False, min_val=100)
+
+        try:
+            Profile(dict={'salary': 10000000})
+        except DataValidationError as e:
+            self.assertEqual(e.err, 'Pre check failed: 10000000 for salary should be in range 1000 to 100000')
+
+        try:
+            Profile(dict={'salary': 10000, 'expenses': 100000})
+        except DataValidationError as e:
+            self.assertEqual(e.err, 'Pre check failed: 100000 for expenses should be in range 0 to 10000')
+
+        try:
+            Profile(dict={'salary': 100000, 'expenses': 1000, 'donation': 10})
+        except DataValidationError as e:
+            self.assertEqual(e.err, 'Pre check failed: 10 for donation should be in range 100 to inf')
+
+        profile = Profile(dict={'salary': 10000, 'expenses': 1000, 'donation': 1000})
+
+        self.assertEqual(
+            profile.get_input_spec(),
+            {
+                'donation': {'type': 'RangeField', 'required': False, 'range': {'min': 100, 'max': math.inf}},
+                'expenses': {'type': 'RangeField', 'required': False, 'range': {'min': 0, 'max': 10000}},
+                'salary': {'type': 'RangeField', 'required': False, 'range': {'min': 1000, 'max': 100000}}
+            }
+        )
