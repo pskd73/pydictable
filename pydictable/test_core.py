@@ -8,7 +8,7 @@ from unittest import TestCase
 
 from pydictable.core import DictAble
 from pydictable.field import IntField, StrField, ListField, ObjectField, DatetimeField, CustomField, MultiTypeField, \
-    EnumField, DictField, DictValueField, UnionField, DataValidationError, RegexField, RangeField
+    EnumField, DictField, DictValueField, UnionField, DataValidationError, RegexField, RangeIntField, RangeFloatField
 
 
 class TestCore(TestCase):
@@ -832,9 +832,9 @@ class TestCore(TestCase):
 
     def test_range(self):
         class Profile(DictAble):
-            salary: int = RangeField(required=False, max_val=100000, min_val=1000)
-            expenses: int = RangeField(required=False, max_val=10000)
-            donation: int = RangeField(required=False, min_val=100)
+            salary: int = RangeIntField(required=False, max_val=100000, min_val=1000)
+            expenses: int = RangeFloatField(required=False, max_val=10000)
+            donation: int = RangeFloatField(required=False, min_val=100)
 
         try:
             Profile(dict={'salary': 10000000})
@@ -844,7 +844,7 @@ class TestCore(TestCase):
         try:
             Profile(dict={'salary': 10000, 'expenses': 100000})
         except DataValidationError as e:
-            self.assertEqual(e.err, 'Pre check failed: 100000 for expenses should be in range 0 to 10000')
+            self.assertEqual(e.err, 'Pre check failed: 100000 for expenses should be in range 0.0 to 10000')
 
         try:
             Profile(dict={'salary': 100000, 'expenses': 1000, 'donation': 10})
@@ -856,8 +856,8 @@ class TestCore(TestCase):
         self.assertEqual(
             profile.get_input_spec(),
             {
-                'donation': {'type': 'RangeField', 'required': False, 'range': {'min': 100, 'max': math.inf}},
-                'expenses': {'type': 'RangeField', 'required': False, 'range': {'min': 0, 'max': 10000}},
-                'salary': {'type': 'RangeField', 'required': False, 'range': {'min': 1000, 'max': 100000}}
+                'donation': {'type': 'RangeFloatField', 'required': False, 'range': {'min': 100, 'max': math.inf}},
+                'expenses': {'type': 'RangeFloatField', 'required': False, 'range': {'min': 0.0, 'max': 10000}},
+                'salary': {'type': 'RangeIntField', 'required': False, 'range': {'min': 1000, 'max': 100000}}
             }
         )

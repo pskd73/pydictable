@@ -350,21 +350,44 @@ class RegexField(Field):
         return v
 
     def validate_dict(self, field_name: str, v):
-        try:
-            assert re.match(self.regex_string, v), f"{v} for {field_name} should be in proper format"
-        except AssertionError as e:
-            raise AssertionError(str(e))
+        assert re.match(self.regex_string, v), f"{v} for {field_name} should be in proper format"
 
     def validate(self, field_name: str, v):
-        assert isinstance(v, str)
+        assert isinstance(v, str) or isinstance(v, int)
 
     def regex(self):
         return self.regex_string
 
 
-class RangeField(Field):
+class RangeIntField(Field):
     def __init__(self, min_val: int = 0, max_val: int = math.inf, *args, **kwargs):
-        super(RangeField, self).__init__(*args, **kwargs)
+        super(RangeIntField, self).__init__(*args, **kwargs)
+        self.min_val = min_val
+        self.max_val = max_val
+
+    def from_dict(self, v):
+        return v
+
+    def to_dict(self, v):
+        return v
+
+    def validate_dict(self, field_name: str, v):
+        try:
+            assert self.min_val <= v <= self.max_val, \
+                f"{v} for {field_name} should be in range {self.min_val} to {self.max_val}"
+        except AssertionError as e:
+            raise AssertionError(str(e))
+
+    def validate(self, field_name: str, v):
+        assert isinstance(v, int)
+
+    def range(self):
+        return {'min': self.min_val, 'max': self.max_val}
+
+
+class RangeFloatField(Field):
+    def __init__(self, min_val: int = 0.0, max_val: int = math.inf, *args, **kwargs):
+        super(RangeFloatField, self).__init__(*args, **kwargs)
         self.min_val = min_val
         self.max_val = max_val
 
