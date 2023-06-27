@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Callable, Tuple, Optional
+from typing import Any, Callable, Tuple
 
 DefaultFactoryType = Tuple[Callable, Tuple[Any], dict]
 
@@ -11,11 +11,13 @@ class Field:
             key: str = None,
             default: Any = None,
             default_factory: DefaultFactoryType = None,
+            regex_string: str = None
     ):
         self.required = required
         self.key = key
         self.default = default
         self.default_factory = default_factory
+        self.regex_string = regex_string
 
     @abstractmethod
     def from_dict(self, v):
@@ -36,9 +38,6 @@ class Field:
     def of(self):
         return
 
-    def regex(self):
-        return
-
     def range(self):
         return
 
@@ -50,7 +49,7 @@ class Field:
         of = self.of()
         if of:
             spec['of'] = of
-        regex = self.regex()
+        regex = self.regex_string
         if regex:
             spec['regex'] = regex
         _range = self.range()

@@ -833,8 +833,8 @@ class TestCore(TestCase):
     def test_range(self):
         class Profile(DictAble):
             salary: int = RangeIntField(required=False, max_val=100000, min_val=1000)
-            expenses: int = RangeFloatField(required=False, max_val=10000)
-            donation: int = RangeFloatField(required=False, min_val=100)
+            expenses: float = RangeFloatField(required=False, max_val=10000.0)
+            donation: float = RangeFloatField(required=False, min_val=100.0)
 
         try:
             Profile(dict={'salary': 10000000})
@@ -842,16 +842,16 @@ class TestCore(TestCase):
             self.assertEqual(e.err, 'Pre check failed: 10000000 for salary should be in range 1000 to 100000')
 
         try:
-            Profile(dict={'salary': 10000, 'expenses': 100000})
+            Profile(dict={'salary': 10000, 'expenses': 100000.0})
         except DataValidationError as e:
-            self.assertEqual(e.err, 'Pre check failed: 100000 for expenses should be in range 0.0 to 10000')
+            self.assertEqual(e.err, 'Pre check failed: 100000.0 for expenses should be in range 0.0 to 10000.0')
 
         try:
-            Profile(dict={'salary': 100000, 'expenses': 1000, 'donation': 10})
+            Profile(dict={'salary': 100000, 'expenses': 1000.0, 'donation': 10.0})
         except DataValidationError as e:
-            self.assertEqual(e.err, 'Pre check failed: 10 for donation should be in range 100 to inf')
+            self.assertEqual(e.err, 'Pre check failed: 10.0 for donation should be in range 100.0 to inf')
 
-        profile = Profile(dict={'salary': 10000, 'expenses': 1000, 'donation': 1000})
+        profile = Profile(dict={'salary': 10000, 'expenses': 1000.0, 'donation': 1000.0})
 
         self.assertEqual(
             profile.get_input_spec(),

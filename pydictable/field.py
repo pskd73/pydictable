@@ -355,9 +355,6 @@ class RegexField(Field):
     def validate(self, field_name: str, v):
         assert isinstance(v, str) or isinstance(v, int)
 
-    def regex(self):
-        return self.regex_string
-
 
 class RangeIntField(Field):
     def __init__(self, min_val: int = 0, max_val: int = math.inf, *args, **kwargs):
@@ -386,7 +383,7 @@ class RangeIntField(Field):
 
 
 class RangeFloatField(Field):
-    def __init__(self, min_val: int = 0.0, max_val: int = math.inf, *args, **kwargs):
+    def __init__(self, min_val: float = 0.0, max_val: float = math.inf, *args, **kwargs):
         super(RangeFloatField, self).__init__(*args, **kwargs)
         self.min_val = min_val
         self.max_val = max_val
@@ -405,7 +402,7 @@ class RangeFloatField(Field):
             raise AssertionError(str(e))
 
     def validate(self, field_name: str, v):
-        assert isinstance(v, int)
+        assert isinstance(v, float)
 
     def range(self):
         return {'min': self.min_val, 'max': self.max_val}
