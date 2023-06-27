@@ -22,3 +22,26 @@ class TestField(TestCase):
 
         field.validate_dict('x', {'pramod': {'age': 2}})
         self.assertEqual(field.from_dict({'pramod': {'age': 2}})['pramod'].age, 2)
+
+    def test_dict_spec(self):
+        class Student(DictAble):
+            name: str
+
+        class School(DictAble):
+            name: str
+            students = DictField(key_type=StrField(), value_type=ObjectField(Student))
+
+        spec = School.get_input_spec()
+        self.assertEqual(spec['name']['type'], 'StrField')
+        self.assertEqual(spec['students']['type'], 'DictField')
+        self.assertEqual(spec['students']['of']['key']['type'], 'StrField')
+        self.assertEqual(spec['students']['of']['value']['type'], 'ObjectField')
+        self.assertEqual(spec['students']['of']['value']['of']['name']['type'], 'StrField')
+
+        class School(DictAble):
+            name: str
+            students = DictField()
+
+        spec = School.get_input_spec()
+        self.assertEqual(spec['students']['of']['key']['type'], 'AnyField')
+        self.assertEqual(spec['students']['of']['value']['type'], 'AnyField')
