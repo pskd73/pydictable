@@ -353,7 +353,7 @@ class RegexField(Field):
         assert re.match(self.regex_string, v), f"{v} for {field_name} should be in proper format"
 
     def validate(self, field_name: str, v):
-        assert isinstance(v, str) or isinstance(v, int)
+        assert isinstance(v, str)
 
 
 class RangeIntField(Field):
