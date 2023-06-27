@@ -37,3 +37,11 @@ class TestField(TestCase):
         self.assertEqual(spec['students']['of']['key']['type'], 'StrField')
         self.assertEqual(spec['students']['of']['value']['type'], 'ObjectField')
         self.assertEqual(spec['students']['of']['value']['of']['name']['type'], 'StrField')
+
+        class School(DictAble):
+            name: str
+            students = DictField()
+
+        spec = School.get_input_spec()
+        self.assertEqual(spec['students']['of']['key']['type'], 'AnyField')
+        self.assertEqual(spec['students']['of']['value']['type'], 'AnyField')
