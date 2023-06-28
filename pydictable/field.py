@@ -336,7 +336,13 @@ class DictField(Field):
         for k, v in value.items():
             self.key_type.validate(None, k)
             self.value_type.validate(None, v)
-
+            
+    def of(self):
+        return {
+            'key': self.key_type.spec(),
+            'value': self.value_type.spec()
+        }   
+         
 
 class RegexField(Field):
     def __init__(self, regex_string: str, *args, **kwargs):
