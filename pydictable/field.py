@@ -378,8 +378,8 @@ class RangeIntField(Field):
     def validate(self, field_name: str, v):
         assert isinstance(v, int)
 
-    def range(self):
-        return {'min': self.min_val, 'max': self.max_val}
+    def of(self):
+        return {'range': {'min': self.min_val, 'max': self.max_val}}
 
 
 class RangeFloatField(Field):
@@ -401,5 +401,5 @@ class RangeFloatField(Field):
     def validate(self, field_name: str, v):
         assert isinstance(v, float)
 
-    def range(self):
-        return {'min': self.min_val, 'max': self.max_val}
+    def of(self):
+        return {'range': {'min': self.min_val, 'max': self.max_val}}

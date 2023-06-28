@@ -47,9 +47,6 @@ class Field:
         of = self.of()
         if of:
             spec['of'] = of
-        _range = self.range()
-        if _range:
-            spec['range'] = _range
         return spec
 
 
