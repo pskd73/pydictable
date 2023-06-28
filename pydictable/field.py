@@ -355,6 +355,9 @@ class RegexField(Field):
     def validate(self, field_name: str, v):
         assert isinstance(v, str)
 
+    def of(self):
+        return {'regex': self.regex_string}
+
 
 class RangeIntField(Field):
     def __init__(self, min_val: int = 0, max_val: int = math.inf, *args, **kwargs):

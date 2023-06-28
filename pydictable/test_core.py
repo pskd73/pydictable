@@ -777,7 +777,7 @@ class TestCore(TestCase):
         self.assertEqual(DOB(dict={'date': None}).date, now)
 
         millis = 1684462306000
-        self.assertEqual(DOB(dict={'date': millis}).date, datetime.fromtimestamp(millis/1000))
+        self.assertEqual(DOB(dict={'date': millis}).date, datetime.fromtimestamp(millis / 1000))
 
         class DOB(DictAble):
             date: datetime = DatetimeField(default_factory=(datetime.now, (), {}))
@@ -824,9 +824,9 @@ class TestCore(TestCase):
             {
                 'email': {
                     'type': 'RegexField', 'required': False,
-                    'regex': '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$'
+                    'of': {'regex': '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$'}
                 },
-                'panNumber': {'type': 'RegexField', 'required': False, 'regex': '^[A-Z]{5}[0-9]{4}[A-Z]$'}
+                'panNumber': {'type': 'RegexField', 'required': False, 'of': {'regex': '^[A-Z]{5}[0-9]{4}[A-Z]$'}}
             }
         )
 
