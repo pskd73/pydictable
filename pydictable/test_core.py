@@ -856,10 +856,8 @@ class TestCore(TestCase):
         self.assertEqual(
             profile.get_input_spec(),
             {
-                'donation': {
-                    'type': 'RangeFloatField', 'required': False, 'of': {'range': {'min': 100, 'max': math.inf}}
-                },
-                'expenses': {'type': 'RangeFloatField', 'required': False, 'of': {'range': {'min': 0.0, 'max': 10000}}},
-                'salary': {'type': 'RangeIntField', 'required': False, 'of': {'range': {'min': 1000, 'max': 100000}}}
+                'donation': {'type': 'RangeFloatField', 'required': False, 'of': {'min': 100, 'max': math.inf}},
+                'expenses': {'type': 'RangeFloatField', 'required': False, 'of': {'min': 0.0, 'max': 10000}},
+                'salary': {'type': 'RangeIntField', 'required': False, 'of': {'min': 1000, 'max': 100000}}
             }
         )
