@@ -36,9 +36,6 @@ class Field:
     def of(self):
         return
 
-    def range(self):
-        return
-
     def spec(self) -> dict:
         spec = {
             'type': self.__class__.__name__,
