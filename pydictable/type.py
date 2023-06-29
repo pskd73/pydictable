@@ -10,7 +10,7 @@ class Field:
             required: bool = False,
             key: str = None,
             default: Any = None,
-            default_factory: DefaultFactoryType = None
+            default_factory: DefaultFactoryType = None,
     ):
         self.required = required
         self.key = key
@@ -26,11 +26,11 @@ class Field:
         pass
 
     @abstractmethod
-    def validate_dict(self, field_name: Optional[str], v):
+    def validate_dict(self, field_name: str, v):
         pass
 
     @abstractmethod
-    def validate(self, field_name: Optional[str], v):
+    def validate(self, field_name: str, v):
         pass
 
     def of(self):
@@ -53,8 +53,4 @@ class _BaseDictAble:
 
     @abstractmethod
     def to_dict(self) -> dict:
-        pass
-
-    @classmethod
-    def get_input_spec(cls):
         pass
