@@ -1,13 +1,14 @@
 import json
+import math
 from datetime import datetime
 from enum import Enum
 from time import sleep
-from typing import List, Dict, Optional, Tuple, Union, Any
+from typing import List, Dict, Optional, Union, Any
 from unittest import TestCase
 
 from pydictable.core import DictAble
 from pydictable.field import IntField, StrField, ListField, ObjectField, DatetimeField, CustomField, MultiTypeField, \
-    EnumField, DictField, DictValueField, UnionField, DataValidationError
+    EnumField, DictField, DictValueField, UnionField, DataValidationError, RegexField, RangeIntField, RangeFloatField
 
 
 class TestCore(TestCase):
@@ -355,8 +356,8 @@ class TestCore(TestCase):
         class User(DictAble):
             pins: Dict[str, Address] = DictValueField(Address)
 
-        u = User(pins={'a': Address(pin='333')})
-        u = User(dict={'pins': {'a': {'pin': '333'}}})
+        User(pins={'a': Address(pin='333')})
+        User(dict={'pins': {'a': {'pin': '333'}}})
 
     def test_union_field(self):
         class User(DictAble):
@@ -776,7 +777,7 @@ class TestCore(TestCase):
         self.assertEqual(DOB(dict={'date': None}).date, now)
 
         millis = 1684462306000
-        self.assertEqual(DOB(dict={'date': millis}).date, datetime.fromtimestamp(millis/1000))
+        self.assertEqual(DOB(dict={'date': millis}).date, datetime.fromtimestamp(millis / 1000))
 
         class DOB(DictAble):
             date: datetime = DatetimeField(default_factory=(datetime.now, (), {}))
@@ -800,3 +801,63 @@ class TestCore(TestCase):
         self.assertEqual(Number().num, 40)
         self.assertEqual(Number(dict={'num': None}).num, 40)
         self.assertEqual(Number(dict={'num': 5}).num, 5)
+
+    def test_regex(self):
+        class Profile(DictAble):
+            panNumber: str = RegexField(required=False, regex_string=r"^[A-Z]{5}[0-9]{4}[A-Z]$")
+            email: str = RegexField(regex_string=r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")
+
+        try:
+            Profile(dict={'email': 'xyz'})
+        except DataValidationError as e:
+            self.assertEqual(e.err, 'Pre check failed: xyz for email should be in proper format')
+
+        try:
+            Profile(dict={'email': 'abc@gmail.com', 'panNumber': '12345'})
+        except DataValidationError as e:
+            self.assertEqual(e.err, 'Pre check failed: 12345 for panNumber should be in proper format')
+
+        profile = Profile(dict={'email': 'abc@gmail.com', 'panNumber': 'ABCDE1234H'})
+
+        self.assertEqual(
+            profile.get_input_spec(),
+            {
+                'email': {
+                    'type': 'RegexField', 'required': False,
+                    'of': {'regex': '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$'}
+                },
+                'panNumber': {'type': 'RegexField', 'required': False, 'of': {'regex': '^[A-Z]{5}[0-9]{4}[A-Z]$'}}
+            }
+        )
+
+    def test_range(self):
+        class Profile(DictAble):
+            salary: int = RangeIntField(required=False, max_val=100000, min_val=1000)
+            expenses: float = RangeFloatField(required=False, max_val=10000.0)
+            donation: float = RangeFloatField(required=False, min_val=100.0)
+
+        try:
+            Profile(dict={'salary': 10000000})
+        except DataValidationError as e:
+            self.assertEqual(e.err, 'Pre check failed: 10000000 for salary should be in range 1000 to 100000')
+
+        try:
+            Profile(dict={'salary': 10000, 'expenses': 100000.0})
+        except DataValidationError as e:
+            self.assertEqual(e.err, 'Pre check failed: 100000.0 for expenses should be in range 0.0 to 10000.0')
+
+        try:
+            Profile(dict={'salary': 100000, 'expenses': 1000.0, 'donation': 10.0})
+        except DataValidationError as e:
+            self.assertEqual(e.err, 'Pre check failed: 10.0 for donation should be in range 100.0 to inf')
+
+        profile = Profile(dict={'salary': 10000, 'expenses': 1000.0, 'donation': 1000.0})
+
+        self.assertEqual(
+            profile.get_input_spec(),
+            {
+                'donation': {'type': 'RangeFloatField', 'required': False, 'of': {'min': 100, 'max': math.inf}},
+                'expenses': {'type': 'RangeFloatField', 'required': False, 'of': {'min': 0.0, 'max': 10000}},
+                'salary': {'type': 'RangeIntField', 'required': False, 'of': {'min': 1000, 'max': 100000}}
+            }
+        )
