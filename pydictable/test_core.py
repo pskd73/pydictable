@@ -813,6 +813,11 @@ class TestCore(TestCase):
             self.assertEqual(e.err, 'Pre check failed: xyz for email should be in proper format')
 
         try:
+            Profile(dict={'email': 1234567})
+        except DataValidationError as e:
+            self.assertEqual(e.err, 'Pre check failed: Invalid value 1234567 for field email')
+
+        try:
             Profile(dict={'email': 'abc@gmail.com', 'panNumber': '12345'})
         except DataValidationError as e:
             self.assertEqual(e.err, 'Pre check failed: 12345 for panNumber should be in proper format')
@@ -842,9 +847,19 @@ class TestCore(TestCase):
             self.assertEqual(e.err, 'Pre check failed: 10000000 for salary should be in range 1000 to 100000')
 
         try:
+            Profile(dict={'salary': True})
+        except DataValidationError as e:
+            self.assertEqual(e.err, 'Pre check failed: True for salary should be in range 1000 to 100000')
+
+        try:
             Profile(dict={'salary': 10000, 'expenses': 100000.0})
         except DataValidationError as e:
             self.assertEqual(e.err, 'Pre check failed: 100000.0 for expenses should be in range 0.0 to 10000.0')
+
+        try:
+            Profile(dict={'salary': 10000, 'expenses': '100000.0'})
+        except DataValidationError as e:
+            self.assertEqual(e.err, 'Pre check failed: Invalid value 100000.0 for field expenses')
 
         try:
             Profile(dict={'salary': 100000, 'expenses': 1000.0, 'donation': 10.0})
