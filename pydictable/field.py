@@ -356,6 +356,7 @@ class RegexField(Field):
         return v
 
     def validate_dict(self, field_name: str, v):
+        assert isinstance(v, str)
         assert re.match(self.regex_string, v), f"{v} for {field_name} should be in proper format"
 
     def validate(self, field_name: str, v):
@@ -378,6 +379,7 @@ class RangeIntField(Field):
         return v
 
     def validate_dict(self, field_name: str, v):
+        assert isinstance(v, int)
         assert self.min_val <= v <= self.max_val, \
             f"{v} for {field_name} should be in range {self.min_val} to {self.max_val}"
 
@@ -401,6 +403,7 @@ class RangeFloatField(Field):
         return v
 
     def validate_dict(self, field_name: str, v):
+        assert isinstance(v, float)
         assert self.min_val <= v <= self.max_val, \
             f"{v} for {field_name} should be in range {self.min_val} to {self.max_val}"
 
