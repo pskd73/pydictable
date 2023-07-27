@@ -179,3 +179,10 @@ class DictAble(_BaseDictAble):
         for attr, field in cls.__get_fields().items():
             d[cls.__get_field_key(attr)] = field.spec()
         return d
+
+    @classmethod
+    def get_custom_input_spec(cls) -> dict:
+        d = {}
+        for attr, field in cls.__get_fields().items():
+            d[cls.__get_field_key(attr)] = {**field.spec(), **field.__dict__}
+        return d
