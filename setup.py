@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='pydictable',
-    version='1.2.2',
+    version='1.2.3',
     author='Pramod Kumar',
     author_email='pramodkumar.damam73@gmail.com',
     description='Make your classes from/to dict',
