@@ -7,7 +7,7 @@ from pydictable import Field, DictAble
 class GenericDictAble(DictAble):
     @classmethod
     def clone(cls):
-        class Dummy(DictAble):
+        class _DictAble(DictAble):
             pass
 
         fields = {}
@@ -16,9 +16,9 @@ class GenericDictAble(DictAble):
                 fields[attr[0]] = attr[1]
 
         for key, value in fields.items():
-            setattr(Dummy, key, value)
+            setattr(_DictAble, key, value)
 
-        return Dummy
+        return _DictAble
 
     @staticmethod
     def inject(*args, **kwargs) -> Dict[str, Field]:
