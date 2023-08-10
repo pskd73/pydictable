@@ -5,8 +5,7 @@ from enum import Enum
 from time import sleep
 from typing import List, Dict, Optional, Union, Any
 from unittest import TestCase
-
-from pydictable.core import DictAble
+from pydictable.core import DictAble, partial
 from pydictable.field import IntField, StrField, ListField, ObjectField, DatetimeField, CustomField, MultiTypeField, \
     EnumField, DictField, DictValueField, UnionField, DataValidationError, RegexField, RangeIntField, RangeFloatField
 
@@ -876,3 +875,45 @@ class TestCore(TestCase):
                 'salary': {'type': 'RangeIntField', 'required': False, 'of': {'min': 1000, 'max': 100000}}
             }
         )
+
+    def test_partial(self):
+        class Account(Enum):
+            INTEREST_DUE = 'INTEREST_DUE'
+            PRINCIPAL_DUE = 'PRINCIPAL_DUE'
+            CHARGE_DUE = 'CHARGE_DUE'
+
+        class CFMode(Enum):
+            DUE = 'DUE'
+            DEDUCT = 'DEDUCT'
+
+        class EPIConfig(DictAble):
+            cycle_duration: int
+            n_cycles: int
+            first_due_delta_days: int
+            first_due_weekday: Optional[int] = IntField(required=False)
+            first_due_day_of_month: Optional[int] = IntField(required=False)
+
+        class ProductConfig(DictAble):
+            allocation_policy: List[List[Account]] = ListField(
+                ListField(EnumField(Account, required=True), required=True), required=True
+            )
+            epi_config: Optional[EPIConfig] = ObjectField(EPIConfig, required=True)
+            lpp_pct: float
+            cf_mode: CFMode
+            po_due_pct: int
+            is_co_lent: bool
+
+        partial_product_config = partial(ProductConfig)
+        fields = partial_product_config.get_fields()
+        self.assertEqual(partial_product_config.__name__, 'PartialProductConfig')
+        self.assertEqual(fields['allocation_policy'].required, False)
+        self.assertEqual(fields['allocation_policy'].spec()['of']['required'], True)
+        self.assertEqual(fields['allocation_policy'].spec()['of']['of']['required'], True)
+        self.assertEqual(fields['epi_config'].required, False)
+        self.assertEqual(fields['epi_config'].spec()['of']['cycle_duration']['required'], True)
+        self.assertEqual(fields['epi_config'].spec()['of']['n_cycles']['required'], True)
+        self.assertEqual(fields['epi_config'].spec()['of']['first_due_delta_days']['required'], True)
+        self.assertEqual(fields['lpp_pct'].required, False)
+        self.assertEqual(fields['cf_mode'].required, False)
+        self.assertEqual(fields['po_due_pct'].required, False)
+        self.assertEqual(fields['is_co_lent'].required, False)

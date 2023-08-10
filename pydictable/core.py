@@ -29,7 +29,7 @@ class DictAble(_BaseDictAble):
     def __init__(self, *args, **kwargs):
         super(DictAble, self).__init__(*args, **kwargs)
         self.__clear_default_field_values()
-        fields = self.__get_fields()
+        fields = self.get_fields()
         for k, v in kwargs.items():
             if k in fields:
                 self.__setattr__(k, v)
@@ -98,7 +98,7 @@ class DictAble(_BaseDictAble):
         return field_type(required=True)
 
     @classmethod
-    def __get_fields(cls) -> Dict[str, Field]:
+    def get_fields(cls) -> Dict[str, Field]:
         fields = {}
         for attr in inspect.getmembers(cls):
             if isinstance(attr[1], Field):
@@ -110,22 +110,22 @@ class DictAble(_BaseDictAble):
 
     @classmethod
     def __get_field_key(cls, obj_attr: str):
-        field = cls.__get_fields()[obj_attr]
+        field = cls.get_fields()[obj_attr]
         return field.key if field.key else obj_attr
 
     def __clear_default_field_values(self):
-        for attr, field in self.__class__.__get_fields().items():
+        for attr, field in self.__class__.get_fields().items():
             self.__setattr__(attr, None)
 
     def __apply_dict(self, d: dict):
-        for attr, field in self.__class__.__get_fields().items():
+        for attr, field in self.__class__.get_fields().items():
             value = d.get(self.__get_field_key(attr))
             if not field.required and value is None:
                 continue
             self.__setattr__(attr, field.from_dict(value))
 
     def __validate_dict(self, raw_values: dict):
-        for attr, field in self.__get_fields().items():
+        for attr, field in self.get_fields().items():
             value = raw_values.get(self.__get_field_key(attr), field.default)
             if value is None and not field.required:
                 continue
@@ -139,7 +139,7 @@ class DictAble(_BaseDictAble):
                 raise DataValidationError(attr, f'Pre check failed: Invalid value {value} for field {attr}')
 
     def __validate(self):
-        for attr, field in self.__get_fields().items():
+        for attr, field in self.get_fields().items():
             value = self.__getattribute__(attr)
             if value is None and not field.required:
                 continue
@@ -152,7 +152,7 @@ class DictAble(_BaseDictAble):
                                           'Post check failed. Invalid value "{}" for field "{}"'.format(value, attr))
 
     def __set_defaults(self):
-        for attr, field in self.__get_fields().items():
+        for attr, field in self.get_fields().items():
             if field.required and field.default is not None:
                 raise InvalidSchema(f'Both required and default passed for field {attr}')
             value = self.__getattribute__(attr)
@@ -165,7 +165,7 @@ class DictAble(_BaseDictAble):
 
     def to_dict(self) -> dict:
         d = {}
-        for attr, field in self.__class__.__get_fields().items():
+        for attr, field in self.__class__.get_fields().items():
             raw_value = self.__getattribute__(attr)
             if not field.required and raw_value is None:
                 d[self.__get_field_key(attr)] = None
@@ -176,6 +176,14 @@ class DictAble(_BaseDictAble):
     @classmethod
     def get_input_spec(cls) -> dict:
         d = {}
-        for attr, field in cls.__get_fields().items():
+        for attr, field in cls.get_fields().items():
             d[cls.__get_field_key(attr)] = field.spec()
         return d
+
+
+def partial(base_dictable: Type[DictAble]) -> Type[DictAble]:
+    partial_attributes = {}
+    for field_name, field_obj in base_dictable.get_fields().items():
+        field_obj.required = False
+        partial_attributes[field_name] = field_obj
+    return type(f'Partial{base_dictable.__name__}', (base_dictable,), partial_attributes)
