@@ -116,7 +116,7 @@ class ListField(Field):
         return [self.obj_type.from_dict(e) for e in v]
 
     def to_dict(self, v, skip_optional: bool = False):
-        return [self.obj_type.to_dict(e) for e in v]
+        return [self.obj_type.to_dict(e, skip_optional) for e in v]
 
     def validate_dict(self, field_name: str, v):
         assert type(v) == list
@@ -209,7 +209,7 @@ class DictValueField(Field):
         return {key: self.value_type(dict=val) for key, val in v.items()}
 
     def to_dict(self, v, skip_optional: bool = False):
-        return {key: val.to_dict() for key, val in v.items()}
+        return {key: val.to_dict(skip_optional) for key, val in v.items()}
 
     def validate_dict(self, field_name: str, v: dict):
         assert type(v) == dict
@@ -231,7 +231,7 @@ class UnionField(Field):
             try:
                 field.validate_dict('', v)
                 return field.from_dict(v)
-            except AssertionError:
+            except (AssertionError, DataValidationError):
                 pass
         raise NotImplementedError()
 
@@ -239,7 +239,7 @@ class UnionField(Field):
         for name, field in self.fields_dict.items():
             try:
                 field.validate('', v)
-                return field.to_dict(v)
+                return field.to_dict(v, skip_optional)
             except AssertionError:
                 pass
         raise NotImplementedError()
@@ -249,7 +249,7 @@ class UnionField(Field):
             try:
                 field.validate_dict('', v)
                 return
-            except AssertionError:
+            except (AssertionError, DataValidationError):
                 pass
         raise AssertionError(f'{v} does not match for any of {list(self.fields_dict.keys())}')
 
@@ -312,7 +312,8 @@ class DictField(Field):
         return {self.key_type.from_dict(k): self.value_type.from_dict(v) for k, v in value.items()}
 
     def to_dict(self, value, skip_optional: bool = False):
-        return {self.key_type.to_dict(k): self.value_type.to_dict(v) for k, v in value.items()}
+        return {self.key_type.to_dict(k, skip_optional): self.value_type.to_dict(v, skip_optional)
+                for k, v in value.items()}
 
     def validate_dict(self, field_name: str, value):
         assert type(value) is dict

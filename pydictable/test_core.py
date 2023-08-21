@@ -7,7 +7,8 @@ from typing import List, Dict, Optional, Union, Any
 from unittest import TestCase
 from pydictable.core import DictAble, partial
 from pydictable.field import IntField, StrField, ListField, ObjectField, DatetimeField, CustomField, MultiTypeField, \
-    EnumField, DictField, DictValueField, UnionField, DataValidationError, RegexField, RangeIntField, RangeFloatField
+    EnumField, DictField, DictValueField, UnionField, DataValidationError, RegexField, RangeIntField, RangeFloatField, \
+    NoneField
 
 
 class TestCore(TestCase):
@@ -938,3 +939,24 @@ class TestCore(TestCase):
         p = Person(dict={'address': {'pin_code': 560001}, 'name': 'Pramod'})
         self.assertEqual(p.to_dict(), {'address': {'city': None, 'pin_code': 560001}, 'name': 'Pramod'})
         self.assertEqual(p.to_dict(skip_optional=True), {'address': {'pin_code': 560001}, 'name': 'Pramod'})
+
+        class Car(DictAble):
+            model: str = StrField(required=True)
+            name: str = StrField()
+
+        class Person2(DictAble):
+            name: str = StrField()
+            address: Address = ObjectField(Address)
+            cars: List[Car] = ListField(UnionField([ObjectField(Car), NoneField()]), required=True)
+
+        p = Person2(dict={'cars': [None]})
+        self.assertEqual(p.to_dict(), {'address': None, 'cars': [None], 'name': None})
+        self.assertEqual(p.to_dict(skip_optional=True), {'cars': [None]})
+
+        p = Person2(dict={'cars': [None, {'model': 'i20'}]})
+        self.assertEqual(p.to_dict(), {
+            'address': None,
+            'cars': [None, {'model': 'i20', 'name': None}],
+            'name': None
+        })
+        self.assertEqual(p.to_dict(skip_optional=True), {'cars': [None, {'model': 'i20'}]})
