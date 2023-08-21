@@ -22,7 +22,7 @@ class Field:
         pass
 
     @abstractmethod
-    def to_dict(self, v):
+    def to_dict(self, v, skip_optional: bool = False):
         pass
 
     @abstractmethod
@@ -52,5 +52,5 @@ class _BaseDictAble:
         pass
 
     @abstractmethod
-    def to_dict(self) -> dict:
+    def to_dict(self, skip_optional: bool = False) -> dict:
         pass

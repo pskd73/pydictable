@@ -917,3 +917,24 @@ class TestCore(TestCase):
         self.assertEqual(fields['cf_mode'].required, False)
         self.assertEqual(fields['po_due_pct'].required, False)
         self.assertEqual(fields['is_co_lent'].required, False)
+
+    def test_skip_optional(self):
+        class Address(DictAble):
+            city: str = StrField()
+            pin_code: int = IntField()
+
+        class Person(DictAble):
+            name: str = StrField()
+            address: Address = ObjectField(Address)
+
+        p = Person()
+        self.assertEqual(p.to_dict(), {'address': None, 'name': None})
+        self.assertEqual(p.to_dict(skip_optional=True), {})
+
+        p = Person(dict={'address': {}, 'name': 'Pramod'})
+        self.assertEqual(p.to_dict(), {'address': {'city': None, 'pin_code': None}, 'name': 'Pramod'})
+        self.assertEqual(p.to_dict(skip_optional=True), {'address': {}, 'name': 'Pramod'})
+
+        p = Person(dict={'address': {'pin_code': 560001}, 'name': 'Pramod'})
+        self.assertEqual(p.to_dict(), {'address': {'city': None, 'pin_code': 560001}, 'name': 'Pramod'})
+        self.assertEqual(p.to_dict(skip_optional=True), {'address': {'pin_code': 560001}, 'name': 'Pramod'})
