@@ -8,7 +8,7 @@ from unittest import TestCase
 from pydictable.core import DictAble, partial
 from pydictable.field import IntField, StrField, ListField, ObjectField, DatetimeField, CustomField, MultiTypeField, \
     EnumField, DictField, DictValueField, UnionField, DataValidationError, RegexField, RangeIntField, RangeFloatField, \
-    NoneField
+    FloatField, BoolField, NoneField
 
 
 class TestCore(TestCase):
@@ -960,3 +960,17 @@ class TestCore(TestCase):
             'name': None
         })
         self.assertEqual(p.to_dict(skip_optional=True), {'cars': [None, {'model': 'i20'}]})
+        
+    def test_default_false_values(self):
+
+        class Transaction(DictAble):
+            serial_number: int = IntField(default=0)
+            amount: float = FloatField(default=0.0)
+            description: str = StrField(default='')
+            is_fraud: bool = BoolField(default=False)
+
+        transaction = Transaction(dict={})
+        self.assertEqual(transaction.serial_number, 0)
+        self.assertEqual(transaction.amount, 0.0)
+        self.assertEqual(transaction.description, '')
+        self.assertEqual(transaction.is_fraud, False)

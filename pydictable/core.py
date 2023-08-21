@@ -157,7 +157,7 @@ class DictAble(_BaseDictAble):
                 raise InvalidSchema(f'Both required and default passed for field {attr}')
             value = self.__getattribute__(attr)
             if value is None:
-                if field.default:
+                if field.default is not None:
                     self.__setattr__(attr, field.default)
                 elif field.default_factory:
                     func, args, kwargs = field.default_factory
