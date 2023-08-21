@@ -98,7 +98,8 @@ class ObjectField(Field):
 
     def validate_dict(self, field_name: str, v):
         assert not self.required or v is not None
-        self.obj_type(dict=v)
+        assert type(v) == dict
+        self.obj_type.validate_dict(v)
 
     def validate(self, field_name: str, v):
         assert isinstance(v, _BaseDictAble)

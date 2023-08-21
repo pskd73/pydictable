@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from pydictable import DictField, StrField, DataValidationError, DictAble, ObjectField
+from pydictable import DictField, StrField, DataValidationError, DictAble, ObjectField, UnionField
 
 
 class TestField(TestCase):
@@ -45,3 +45,17 @@ class TestField(TestCase):
         spec = School.get_input_spec()
         self.assertEqual(spec['students']['of']['key']['type'], 'AnyField')
         self.assertEqual(spec['students']['of']['value']['type'], 'AnyField')
+
+    def test_self_ref(self):
+        class Rule(DictAble):
+            expression = None
+
+        Rule.expression = UnionField([StrField(), ObjectField(Rule)])
+
+        self.assertRaises(DataValidationError, lambda: Rule(dict={'expression': 1}))
+
+        r = Rule(dict={'expression': 'exp1'})
+        self.assertEqual(r.expression, 'exp1')
+
+        r = Rule(dict={'expression': {'expression': 'nested'}})
+        self.assertEqual(r.expression.expression, 'nested')

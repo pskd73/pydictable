@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Any, Callable, Tuple, Optional
+from typing import Any, Callable, Tuple
 
 DefaultFactoryType = Tuple[Callable, Tuple[Any], dict]
 
@@ -53,4 +53,12 @@ class _BaseDictAble:
 
     @abstractmethod
     def to_dict(self, skip_optional: bool = False) -> dict:
+        pass
+
+    @classmethod
+    def validate_dict(cls, raw_values: dict):
+        pass
+
+    @classmethod
+    def get_input_spec(cls):
         pass
