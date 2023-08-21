@@ -163,14 +163,15 @@ class DictAble(_BaseDictAble):
                     func, args, kwargs = field.default_factory
                     self.__setattr__(attr, func(*args, **kwargs))
 
-    def to_dict(self) -> dict:
+    def to_dict(self, skip_optional: bool = False) -> dict:
         d = {}
         for attr, field in self.__class__.get_fields().items():
             raw_value = self.__getattribute__(attr)
             if not field.required and raw_value is None:
-                d[self.__get_field_key(attr)] = None
+                if skip_optional is False:
+                    d[self.__get_field_key(attr)] = None
                 continue
-            d[self.__get_field_key(attr)] = field.to_dict(raw_value)
+            d[self.__get_field_key(attr)] = field.to_dict(raw_value, skip_optional=skip_optional)
         return d
 
     @classmethod

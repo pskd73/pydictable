@@ -8,7 +8,7 @@ from unittest import TestCase
 from pydictable.core import DictAble, partial
 from pydictable.field import IntField, StrField, ListField, ObjectField, DatetimeField, CustomField, MultiTypeField, \
     EnumField, DictField, DictValueField, UnionField, DataValidationError, RegexField, RangeIntField, RangeFloatField, \
-    FloatField, BoolField
+    FloatField, BoolField, NoneField
 
 
 class TestCore(TestCase):
@@ -919,6 +919,48 @@ class TestCore(TestCase):
         self.assertEqual(fields['po_due_pct'].required, False)
         self.assertEqual(fields['is_co_lent'].required, False)
 
+    def test_skip_optional(self):
+        class Address(DictAble):
+            city: str = StrField()
+            pin_code: int = IntField()
+
+        class Person(DictAble):
+            name: str = StrField()
+            address: Address = ObjectField(Address)
+
+        p = Person()
+        self.assertEqual(p.to_dict(), {'address': None, 'name': None})
+        self.assertEqual(p.to_dict(skip_optional=True), {})
+
+        p = Person(dict={'address': {}, 'name': 'Pramod'})
+        self.assertEqual(p.to_dict(), {'address': {'city': None, 'pin_code': None}, 'name': 'Pramod'})
+        self.assertEqual(p.to_dict(skip_optional=True), {'address': {}, 'name': 'Pramod'})
+
+        p = Person(dict={'address': {'pin_code': 560001}, 'name': 'Pramod'})
+        self.assertEqual(p.to_dict(), {'address': {'city': None, 'pin_code': 560001}, 'name': 'Pramod'})
+        self.assertEqual(p.to_dict(skip_optional=True), {'address': {'pin_code': 560001}, 'name': 'Pramod'})
+
+        class Car(DictAble):
+            model: str = StrField(required=True)
+            name: str = StrField()
+
+        class Person2(DictAble):
+            name: str = StrField()
+            address: Address = ObjectField(Address)
+            cars: List[Car] = ListField(UnionField([ObjectField(Car), NoneField()]), required=True)
+
+        p = Person2(dict={'cars': [None]})
+        self.assertEqual(p.to_dict(), {'address': None, 'cars': [None], 'name': None})
+        self.assertEqual(p.to_dict(skip_optional=True), {'cars': [None]})
+
+        p = Person2(dict={'cars': [None, {'model': 'i20'}]})
+        self.assertEqual(p.to_dict(), {
+            'address': None,
+            'cars': [None, {'model': 'i20', 'name': None}],
+            'name': None
+        })
+        self.assertEqual(p.to_dict(skip_optional=True), {'cars': [None, {'model': 'i20'}]})
+        
     def test_default_false_values(self):
 
         class Transaction(DictAble):

@@ -19,7 +19,7 @@ class StrField(Field):
     def from_dict(self, v: str):
         return v
 
-    def to_dict(self, v):
+    def to_dict(self, v, skip_optional: bool = False):
         return v
 
     def validate_dict(self, field_name: str, v):
@@ -33,7 +33,7 @@ class BoolField(Field):
     def from_dict(self, v: bool):
         return v
 
-    def to_dict(self, v):
+    def to_dict(self, v, skip_optional: bool = False):
         return v
 
     def validate_dict(self, field_name: str, v):
@@ -47,7 +47,7 @@ class IntField(Field):
     def from_dict(self, v: int):
         return v
 
-    def to_dict(self, v):
+    def to_dict(self, v, skip_optional: bool = False):
         return v
 
     def validate_dict(self, field_name: str, v):
@@ -61,7 +61,7 @@ class FloatField(Field):
     def from_dict(self, v):
         return v
 
-    def to_dict(self, v):
+    def to_dict(self, v, skip_optional: bool = False):
         return v
 
     def validate_dict(self, field_name: str, v):
@@ -75,7 +75,7 @@ class DatetimeField(Field):
     def from_dict(self, v: int):
         return datetime.fromtimestamp(v / 1000)
 
-    def to_dict(self, v: datetime):
+    def to_dict(self, v: datetime, skip_optional: bool = False):
         return int(v.timestamp() * 1000)
 
     def validate_dict(self, field_name: str, v):
@@ -93,8 +93,8 @@ class ObjectField(Field):
     def from_dict(self, v):
         return self.obj_type(dict=v)
 
-    def to_dict(self, v):
-        return None if v is None else v.to_dict()
+    def to_dict(self, v, skip_optional: bool = False):
+        return None if v is None else v.to_dict(skip_optional)
 
     def validate_dict(self, field_name: str, v):
         assert not self.required or v is not None
@@ -115,8 +115,8 @@ class ListField(Field):
     def from_dict(self, v):
         return [self.obj_type.from_dict(e) for e in v]
 
-    def to_dict(self, v):
-        return [self.obj_type.to_dict(e) for e in v]
+    def to_dict(self, v, skip_optional: bool = False):
+        return [self.obj_type.to_dict(e, skip_optional) for e in v]
 
     def validate_dict(self, field_name: str, v):
         assert type(v) == list
@@ -147,7 +147,7 @@ class CustomField(Field, ABC):
     def from_dict(self, v):
         return self._from_json(v)
 
-    def to_dict(self, v):
+    def to_dict(self, v, skip_optional: bool = False):
         return self._to_json(v)
 
 
@@ -178,7 +178,7 @@ class EnumField(Field):
     def from_dict(self, v):
         return self.enum[v] if self.is_name else self.enum(v)
 
-    def to_dict(self, v):
+    def to_dict(self, v, skip_optional: bool = False):
         return v.value
 
     def validate_dict(self, field_name: str, v):
@@ -208,8 +208,8 @@ class DictValueField(Field):
     def from_dict(self, v):
         return {key: self.value_type(dict=val) for key, val in v.items()}
 
-    def to_dict(self, v):
-        return {key: val.to_dict() for key, val in v.items()}
+    def to_dict(self, v, skip_optional: bool = False):
+        return {key: val.to_dict(skip_optional) for key, val in v.items()}
 
     def validate_dict(self, field_name: str, v: dict):
         assert type(v) == dict
@@ -231,15 +231,15 @@ class UnionField(Field):
             try:
                 field.validate_dict('', v)
                 return field.from_dict(v)
-            except AssertionError:
+            except (AssertionError, DataValidationError):
                 pass
         raise NotImplementedError()
 
-    def to_dict(self, v):
+    def to_dict(self, v, skip_optional: bool = False):
         for name, field in self.fields_dict.items():
             try:
                 field.validate('', v)
-                return field.to_dict(v)
+                return field.to_dict(v, skip_optional)
             except AssertionError:
                 pass
         raise NotImplementedError()
@@ -249,7 +249,7 @@ class UnionField(Field):
             try:
                 field.validate_dict('', v)
                 return
-            except AssertionError:
+            except (AssertionError, DataValidationError):
                 pass
         raise AssertionError(f'{v} does not match for any of {list(self.fields_dict.keys())}')
 
@@ -270,7 +270,7 @@ class NoneField(Field):
     def from_dict(self, v):
         return None
 
-    def to_dict(self, v):
+    def to_dict(self, v, skip_optional: bool = False):
         return None
 
     def validate_dict(self, field_name: str, v):
@@ -284,7 +284,7 @@ class AnyField(Field):
     def from_dict(self, v):
         return v
 
-    def to_dict(self, v):
+    def to_dict(self, v, skip_optional: bool = False):
         return v
 
     def validate_dict(self, field_name: str, v):
@@ -311,8 +311,9 @@ class DictField(Field):
     def from_dict(self, value):
         return {self.key_type.from_dict(k): self.value_type.from_dict(v) for k, v in value.items()}
 
-    def to_dict(self, value):
-        return {self.key_type.to_dict(k): self.value_type.to_dict(v) for k, v in value.items()}
+    def to_dict(self, value, skip_optional: bool = False):
+        return {self.key_type.to_dict(k, skip_optional): self.value_type.to_dict(v, skip_optional)
+                for k, v in value.items()}
 
     def validate_dict(self, field_name: str, value):
         assert type(value) is dict
@@ -352,7 +353,7 @@ class RegexField(Field):
     def from_dict(self, v):
         return v
 
-    def to_dict(self, v):
+    def to_dict(self, v, skip_optional: bool = False):
         return v
 
     def validate_dict(self, field_name: str, v):
@@ -375,7 +376,7 @@ class RangeIntField(Field):
     def from_dict(self, v):
         return v
 
-    def to_dict(self, v):
+    def to_dict(self, v, skip_optional: bool = False):
         return v
 
     def validate_dict(self, field_name: str, v):
@@ -399,7 +400,7 @@ class RangeFloatField(Field):
     def from_dict(self, v):
         return v
 
-    def to_dict(self, v):
+    def to_dict(self, v, skip_optional: bool = False):
         return v
 
     def validate_dict(self, field_name: str, v):
