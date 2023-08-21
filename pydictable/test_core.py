@@ -7,7 +7,8 @@ from typing import List, Dict, Optional, Union, Any
 from unittest import TestCase
 from pydictable.core import DictAble, partial
 from pydictable.field import IntField, StrField, ListField, ObjectField, DatetimeField, CustomField, MultiTypeField, \
-    EnumField, DictField, DictValueField, UnionField, DataValidationError, RegexField, RangeIntField, RangeFloatField
+    EnumField, DictField, DictValueField, UnionField, DataValidationError, RegexField, RangeIntField, RangeFloatField, \
+    FloatField, BoolField
 
 
 class TestCore(TestCase):
@@ -917,3 +918,17 @@ class TestCore(TestCase):
         self.assertEqual(fields['cf_mode'].required, False)
         self.assertEqual(fields['po_due_pct'].required, False)
         self.assertEqual(fields['is_co_lent'].required, False)
+
+    def test_default_false_values(self):
+
+        class Transaction(DictAble):
+            serial_number: int = IntField(default=0)
+            amount: float = FloatField(default=0.0)
+            description: str = StrField(default='')
+            is_fraud: bool = BoolField(default=False)
+
+        transaction = Transaction(dict={})
+        self.assertEqual(transaction.serial_number, 0)
+        self.assertEqual(transaction.amount, 0.0)
+        self.assertEqual(transaction.description, '')
+        self.assertEqual(transaction.is_fraud, False)
