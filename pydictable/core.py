@@ -34,7 +34,7 @@ class DictAble(_BaseDictAble):
             if k in fields:
                 self.__setattr__(k, v)
         if kwargs.get('dict'):
-            self.__validate_dict(kwargs['dict'])
+            self.validate_dict(kwargs['dict'])
             self.__apply_dict(kwargs['dict'])
         if len(args) > 0:
             raise ReferenceError('Use kwargs to init DictAble')
@@ -124,9 +124,10 @@ class DictAble(_BaseDictAble):
                 continue
             self.__setattr__(attr, field.from_dict(value))
 
-    def __validate_dict(self, raw_values: dict):
-        for attr, field in self.get_fields().items():
-            value = raw_values.get(self.__get_field_key(attr), field.default)
+    @classmethod
+    def validate_dict(cls, raw_values: dict):
+        for attr, field in cls.get_fields().items():
+            value = raw_values.get(cls.__get_field_key(attr), field.default)
             if value is None and not field.required:
                 continue
             try:
