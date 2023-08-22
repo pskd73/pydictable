@@ -225,46 +225,46 @@ class DictValueField(Field):
 class UnionField(Field):
     def __init__(self, fields: List[Field], *args, **kwargs):
         super(UnionField, self).__init__(*args, **kwargs)
-        self.fields_list = [{'name': f.__class__.__name__, 'field': f} for f in fields]
+        self.fields = fields
 
     def from_dict(self, v):
-        for fd in self.fields_list:
+        for field in self.fields:
             try:
-                fd['field'].validate_dict('', v)
-                return fd['field'].from_dict(v)
+                field.validate_dict('', v)
+                return field.from_dict(v)
             except (AssertionError, DataValidationError):
                 pass
         raise NotImplementedError()
 
     def to_dict(self, v, skip_optional: bool = False):
-        for fd in self.fields_list:
+        for field in self.fields:
             try:
-                fd['field'].validate('', v)
-                return fd['field'].to_dict(v, skip_optional)
+                field.validate('', v)
+                return field.to_dict(v, skip_optional)
             except AssertionError:
                 pass
         raise NotImplementedError()
 
     def validate_dict(self, field_name: str, v):
-        for fd in self.fields_list:
+        for field in self.fields:
             try:
-                fd['field'].validate_dict('', v)
+                field.validate_dict('', v)
                 return
             except (AssertionError, DataValidationError):
                 pass
-        raise AssertionError(f'{v} does not match for any of {[fd["name"] for fd in self.fields_list]}')
+        raise AssertionError(f'{v} does not match for any of {[f.__class__.__name__ for f in self.fields]}')
 
     def validate(self, field_name: str, v):
-        for fd in self.fields_list:
+        for field in self.fields:
             try:
-                fd['field'].validate('', v)
+                field.validate('', v)
                 return
             except (AssertionError, DataValidationError) as e:
                 pass
-        raise AssertionError(f'{v} does not match for any of {[fd["name"] for fd in self.fields_list]}')
+        raise AssertionError(f'{v} does not match for any of {[f.__class__.__name__ for f in self.fields]}')
 
     def of(self):
-        return [fd['field'].spec() for fd in self.fields_list]
+        return [field.spec() for field in self.fields]
 
 
 class NoneField(Field):
