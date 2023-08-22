@@ -366,6 +366,27 @@ class TestCore(TestCase):
         self.assertEqual(User(roll_no="1").roll_no, "1")
         self.assertEqual(User(roll_no=1).roll_no, 1)
 
+    def test_union_field_with_same_field_types(self):
+        class Item1(DictAble):
+            area: int = IntField(required=True)
+
+        class Item2(DictAble):
+            volume: int = IntField(required=True)
+
+        class Receipt(DictAble):
+            items: list[Union[Item1, Item2]] = ListField(
+                UnionField([ObjectField(Item1), ObjectField(Item2)], required=True), required=True)
+
+        data = {'items': [{'area': 10}, {'volume': 100}]}
+        rec = Receipt(dict=data)
+        self.assertIsInstance(rec.items[0], Item1)
+        self.assertEqual(rec.items[0].area, 10)
+        self.assertIsInstance(rec.items[1], Item2)
+        self.assertEqual(rec.items[1].volume, 100)
+
+        data = {'items': [{'area': 10}, {'foo': 100}]}
+        self.assertRaises(DataValidationError, lambda: Receipt(dict=data))
+
     def test_type_hints(self):
         class Address(DictAble):
             pin: Optional[str]
