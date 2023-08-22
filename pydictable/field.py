@@ -264,7 +264,7 @@ class UnionField(Field):
         raise AssertionError(f'{v} does not match for any of {[f.__class__.__name__ for f in self.fields]}')
 
     def of(self):
-        return [field.spec() for field in self.fields]
+        return [f.spec() for f in self.fields]
 
 
 class NoneField(Field):
