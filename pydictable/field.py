@@ -259,7 +259,7 @@ class UnionField(Field):
             try:
                 field.validate('', v)
                 return
-            except (AssertionError, DataValidationError) as e:
+            except AssertionError:
                 pass
         raise AssertionError(f'{v} does not match for any of {[f.__class__.__name__ for f in self.fields]}')
 
