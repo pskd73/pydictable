@@ -225,10 +225,10 @@ class DictValueField(Field):
 class UnionField(Field):
     def __init__(self, fields: List[Field], *args, **kwargs):
         super(UnionField, self).__init__(*args, **kwargs)
-        self.fields_dict = {f.__class__.__name__: f for f in fields}
+        self.fields = fields
 
     def from_dict(self, v):
-        for name, field in self.fields_dict.items():
+        for field in self.fields:
             try:
                 field.validate_dict('', v)
                 return field.from_dict(v)
@@ -237,7 +237,7 @@ class UnionField(Field):
         raise NotImplementedError()
 
     def to_dict(self, v, skip_optional: bool = False):
-        for name, field in self.fields_dict.items():
+        for field in self.fields:
             try:
                 field.validate('', v)
                 return field.to_dict(v, skip_optional)
@@ -246,25 +246,25 @@ class UnionField(Field):
         raise NotImplementedError()
 
     def validate_dict(self, field_name: str, v):
-        for name, field in self.fields_dict.items():
+        for field in self.fields:
             try:
                 field.validate_dict('', v)
                 return
             except (AssertionError, DataValidationError):
                 pass
-        raise AssertionError(f'{v} does not match for any of {list(self.fields_dict.keys())}')
+        raise AssertionError(f'{v} does not match for any of {[f.__class__.__name__ for f in self.fields]}')
 
     def validate(self, field_name: str, v):
-        for name, field in self.fields_dict.items():
+        for field in self.fields:
             try:
                 field.validate('', v)
                 return
             except AssertionError:
                 pass
-        raise AssertionError(f'{v} does not match for any of {list(self.fields_dict.keys())}')
+        raise AssertionError(f'{v} does not match for any of {[f.__class__.__name__ for f in self.fields]}')
 
     def of(self):
-        return [f.spec() for f in self.fields_dict.values()]
+        return [f.spec() for f in self.fields]
 
 
 class NoneField(Field):
