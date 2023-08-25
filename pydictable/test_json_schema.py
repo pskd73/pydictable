@@ -18,7 +18,7 @@ class TestJSONSchema(TestCase):
                     }
                 }
             },
-            '$root': '$defs/Person'
+            '$root': '#/$defs/Person'
         })
 
     def test_cyclic_ref(self):
@@ -42,7 +42,7 @@ class TestJSONSchema(TestCase):
                                 'type': 'ObjectField',
                                 'required': False,
                                 'of': {
-                                    '$ref': '$defs/B'
+                                    '$ref': '#/$defs/B'
                                 }
                             }
                         }
@@ -56,7 +56,7 @@ class TestJSONSchema(TestCase):
                                     'type': 'ObjectField',
                                     'required': False,
                                     'of': {
-                                        '$ref': '$defs/A'
+                                        '$ref': '#/$defs/A'
                                     }
                                 },
                                 {
@@ -67,6 +67,6 @@ class TestJSONSchema(TestCase):
                         }
                     }
                 },
-                '$root': '$defs/A'
+                '$root': '#/$defs/A'
             }
         )

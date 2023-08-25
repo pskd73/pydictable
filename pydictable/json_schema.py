@@ -43,7 +43,7 @@ def get_field_schema(field: Field) -> Tuple[dict, List[Type[DictAble]]]:
         refs += value_refs
     if isinstance(field, ObjectField):
         schema['of'] = {
-            '$ref': f'$defs/{field.obj_type.__name__}'
+            '$ref': f'#/$defs/{field.obj_type.__name__}'
         }
         refs += [field.obj_type]
     return schema, refs
@@ -52,7 +52,7 @@ def get_field_schema(field: Field) -> Tuple[dict, List[Type[DictAble]]]:
 def get_json_schema(schema: Type[DictAble]) -> dict:
     spec = {
         '$defs': {},
-        '$root': f'$defs/{schema.__name__}'
+        '$root': f'#/$defs/{schema.__name__}'
     }
     _update_spec(schema, spec)
     return spec
