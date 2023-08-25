@@ -1,4 +1,6 @@
 import inspect
+import json
+from copy import copy
 from datetime import datetime
 from enum import Enum
 from typing import Dict, get_type_hints, Union, Type, Any
@@ -176,11 +178,24 @@ class DictAble(_BaseDictAble):
         return d
 
     @classmethod
-    def get_input_spec(cls) -> dict:
-        d = {}
+    def _update_spec(cls, spec: dict):
+        if cls.__name__ in spec.get('$defs', {}):
+            return {'$ref': f'$defs/{cls.__name__}'}
+
+        spec['$defs'][cls.__name__] = {}
+        _spec = spec['$defs'][cls.__name__]
         for attr, field in cls.get_fields().items():
-            d[cls.__get_field_key(attr)] = field.spec()
-        return d
+            field_key = cls.__get_field_key(attr)
+            _spec[field_key] = field.get_spec(spec)
+
+    @classmethod
+    def get_input_spec(cls, skip_defs: bool = True) -> dict:
+        spec = {
+            '$defs': {},
+            '$root': f'$defs/{cls.__name__}'
+        }
+        cls._update_spec(spec)
+        return spec
 
 
 def partial(base_dictable: Type[DictAble]) -> Type[DictAble]:
@@ -189,3 +204,211 @@ def partial(base_dictable: Type[DictAble]) -> Type[DictAble]:
         field_obj.required = False
         partial_attributes[field_name] = field_obj
     return type(f'Partial{base_dictable.__name__}', (base_dictable,), partial_attributes)
+
+
+def __ref_to_name(ref: str):
+    return ref.replace('$defs/', '')
+
+
+def flatten_spec(spec: dict, ref: str):
+    child_schema = copy(spec['$defs'][__ref_to_name(ref)])
+
+    for key, item in child_schema.items():
+        of = child_schema['of']
+
+        if type(of) == dict:
+            if of['$ref']:
+                child_schema['of'] = flatten_spec(spec, of['$ref'])
+        elif type(child_schema) == list:
+            for i, of_item in enumerate(of):
+                pass
+
+
+    # for key, field_schema in child_schema.items():
+    #     of_schema = field_schema.get('of', {})
+    #     if type(of_schema) == dict:
+    #         if ref := __get_ref(of_schema):
+    #             child_schema[key]['of'] = flatten_spec(spec, ref)
+    #     elif type(of_schema) == list:
+    #         for i, of_child in enumerate(of_schema):
+    #             if ref := __get_ref(of_child):
+    #                 child_schema[key]['of'][i]['of'] = flatten_spec(spec, ref)
+
+    return child_schema
+
+
+ref_spec = """
+{
+  "$defs": {
+    "Rule": {
+      "action": {
+        "type": "ObjectField",
+        "required": false,
+        "of": {
+          "$ref": "$defs/Action"
+        }
+      },
+      "active": {
+        "type": "BoolField",
+        "required": false
+      },
+      "expr": {
+        "type": "UnionField",
+        "required": true,
+        "of": [
+          {
+            "type": "StrField",
+            "required": false
+          },
+          {
+            "type": "ObjectField",
+            "required": false,
+            "of": {
+              "$ref": "$defs/ComplexExpression"
+            }
+          }
+        ]
+      },
+      "name": {
+        "type": "StrField",
+        "required": false
+      }
+    },
+    "Action": {
+      "body": {
+        "type": "DictField",
+        "required": false,
+        "of": {
+          "key": {
+            "type": "StrField",
+            "required": true
+          },
+          "value": {
+            "type": "AnyField",
+            "required": false
+          }
+        }
+      },
+      "method": {
+        "type": "EnumField",
+        "required": false,
+        "of": [
+          "'POST'",
+          "'PUT'",
+          "'DELETE'"
+        ]
+      },
+      "name": {
+        "type": "StrField",
+        "required": true
+      },
+      "url": {
+        "type": "StrField",
+        "required": true
+      }
+    },
+    "ComplexExpression": {
+      "operands": {
+        "type": "ListField",
+        "required": false,
+        "of": {
+          "type": "ObjectField",
+          "required": false,
+          "of": {
+            "$ref": "$defs/Rule"
+          }
+        }
+      },
+      "operator": {
+        "type": "StrField",
+        "required": true
+      }
+    }
+  },
+  "$root": "$defs/Rule"
+}
+"""
+
+ref_no_cycle = """
+{
+  "$defs": {
+    "Rule": {
+      "action": {
+        "type": "ObjectField",
+        "required": false,
+        "of": {
+          "$ref": "$defs/Action"
+        }
+      },
+      "active": {
+        "type": "BoolField",
+        "required": false
+      },
+      "expr": {
+        "type": "UnionField",
+        "required": true,
+        "of": [
+          {
+            "type": "StrField",
+            "required": false
+          },
+          {
+            "type": "ObjectField",
+            "required": false,
+            "of": {
+              "$ref": "$defs/ComplexExpression"
+            }
+          }
+        ]
+      },
+      "name": {
+        "type": "StrField",
+        "required": false
+      }
+    },
+    "Action": {
+      "body": {
+        "type": "DictField",
+        "required": false,
+        "of": {
+          "key": {
+            "type": "StrField",
+            "required": true
+          },
+          "value": {
+            "type": "AnyField",
+            "required": false
+          }
+        }
+      },
+      "method": {
+        "type": "EnumField",
+        "required": false,
+        "of": [
+          "'POST'",
+          "'PUT'",
+          "'DELETE'"
+        ]
+      },
+      "name": {
+        "type": "StrField",
+        "required": true
+      },
+      "url": {
+        "type": "StrField",
+        "required": true
+      }
+    },
+    "ComplexExpression": {
+      "operator": {
+        "type": "StrField",
+        "required": true
+      }
+    }
+  },
+  "$root": "$defs/Rule"
+}
+"""
+
+if __name__ == '__main__':
+    print(json.dumps(flatten_spec(json.loads(ref_no_cycle), '$defs/Rule'), indent=2))

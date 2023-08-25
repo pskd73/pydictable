@@ -104,8 +104,9 @@ class ObjectField(Field):
     def validate(self, field_name: str, v):
         assert isinstance(v, _BaseDictAble)
 
-    def of(self):
-        return self.obj_type.get_input_spec()
+    def of(self, spec: dict):
+        self.obj_type._update_spec(spec)
+        return {'$ref': f'$defs/{self.obj_type.__name__}'}
 
 
 class ListField(Field):
@@ -131,8 +132,8 @@ class ListField(Field):
         assert type(v) == list
         [self.obj_type.validate(field_name, x) for x in v]
 
-    def of(self):
-        return self.obj_type.spec()
+    def of(self, spec: dict):
+        return self.obj_type.get_spec(spec)
 
 
 class CustomField(Field, ABC):
@@ -193,7 +194,7 @@ class EnumField(Field):
     def validate(self, field_name: str, v):
         assert isinstance(v, Enum)
 
-    def of(self):
+    def of(self, spec: dict):
         return [e.name if self.is_name else e.value for e in self.enum]
 
 
@@ -263,8 +264,8 @@ class UnionField(Field):
                 pass
         raise AssertionError(f'{v} does not match for any of {[f.__class__.__name__ for f in self.fields]}')
 
-    def of(self):
-        return [f.spec() for f in self.fields]
+    def of(self, spec: dict):
+        return [f.get_spec(spec) for f in self.fields]
 
 
 class NoneField(Field):
@@ -339,10 +340,10 @@ class DictField(Field):
             self.key_type.validate(None, k)
             self.value_type.validate(None, v)
             
-    def of(self):
+    def of(self, spec: dict):
         return {
-            'key': self.key_type.spec(),
-            'value': self.value_type.spec()
+            'key': self.key_type.get_spec(spec),
+            'value': self.value_type.get_spec(spec)
         }   
          
 
@@ -364,7 +365,7 @@ class RegexField(Field):
     def validate(self, field_name: str, v):
         assert isinstance(v, str)
 
-    def of(self):
+    def of(self, spec: dict):
         return {'regex': self.regex_string}
 
 
@@ -388,7 +389,7 @@ class RangeIntField(Field):
     def validate(self, field_name: str, v):
         assert isinstance(v, int)
 
-    def of(self):
+    def of(self, spec: dict):
         return {'min': self.min_val, 'max': self.max_val}
 
 
@@ -412,5 +413,5 @@ class RangeFloatField(Field):
     def validate(self, field_name: str, v):
         assert isinstance(v, float)
 
-    def of(self):
+    def of(self, spec: dict):
         return {'min': self.min_val, 'max': self.max_val}

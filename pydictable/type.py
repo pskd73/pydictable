@@ -33,18 +33,18 @@ class Field:
     def validate(self, field_name: str, v):
         pass
 
-    def of(self):
+    def of(self, spec: dict):
         return
 
-    def spec(self) -> dict:
-        spec = {
+    def get_spec(self, spec: dict) -> dict:
+        _spec = {
             'type': self.__class__.__name__,
             'required': self.required
         }
-        of = self.of()
+        of = self.of(spec=spec)
         if of:
-            spec['of'] = of
-        return spec
+            _spec['of'] = of
+        return _spec
 
 
 class _BaseDictAble:
@@ -57,6 +57,10 @@ class _BaseDictAble:
 
     @classmethod
     def validate_dict(cls, raw_values: dict):
+        pass
+
+    @classmethod
+    def _update_spec(cls, spec: dict):
         pass
 
     @classmethod
