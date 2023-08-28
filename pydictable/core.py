@@ -109,7 +109,7 @@ class DictAble(_BaseDictAble):
         return fields
 
     @classmethod
-    def __get_field_key(cls, obj_attr: str):
+    def get_field_key(cls, obj_attr: str):
         field = cls.get_fields()[obj_attr]
         return field.key if field.key else obj_attr
 
@@ -119,7 +119,7 @@ class DictAble(_BaseDictAble):
 
     def __apply_dict(self, d: dict):
         for attr, field in self.__class__.get_fields().items():
-            value = d.get(self.__get_field_key(attr))
+            value = d.get(self.get_field_key(attr))
             if not field.required and value is None:
                 continue
             self.__setattr__(attr, field.from_dict(value))
@@ -127,7 +127,7 @@ class DictAble(_BaseDictAble):
     @classmethod
     def validate_dict(cls, raw_values: dict):
         for attr, field in cls.get_fields().items():
-            value = raw_values.get(cls.__get_field_key(attr), field.default)
+            value = raw_values.get(cls.get_field_key(attr), field.default)
             if value is None and not field.required:
                 continue
             try:
@@ -170,16 +170,16 @@ class DictAble(_BaseDictAble):
             raw_value = self.__getattribute__(attr)
             if not field.required and raw_value is None:
                 if skip_optional is False:
-                    d[self.__get_field_key(attr)] = None
+                    d[self.get_field_key(attr)] = None
                 continue
-            d[self.__get_field_key(attr)] = field.to_dict(raw_value, skip_optional=skip_optional)
+            d[self.get_field_key(attr)] = field.to_dict(raw_value, skip_optional=skip_optional)
         return d
 
     @classmethod
     def get_input_spec(cls) -> dict:
         d = {}
         for attr, field in cls.get_fields().items():
-            d[cls.__get_field_key(attr)] = field.spec()
+            d[cls.get_field_key(attr)] = field.spec()
         return d
 
 
