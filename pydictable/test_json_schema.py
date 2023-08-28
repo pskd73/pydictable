@@ -10,6 +10,14 @@ class TestJSONSchema(TestCase):
 
         schema = get_json_schema(Person)
         self.assertEqual(schema, {
+            'name': {
+                'type': 'StrField',
+                'required': False
+            }
+        })
+
+        schema = get_json_schema(Person, new_schema=True)
+        self.assertEqual(schema, {
             '$defs': {
                 'Person': {
                     'name': {

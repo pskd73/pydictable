@@ -49,7 +49,12 @@ def get_field_schema(field: Field) -> Tuple[dict, List[Type[DictAble]]]:
     return schema, refs
 
 
-def get_json_schema(schema: Type[DictAble]) -> dict:
+def get_json_schema(schema: Type[DictAble], new_schema: bool = False) -> dict:
+    try:
+        if not new_schema:
+            return schema.get_input_spec()
+    except RecursionError:
+        pass
     spec = {
         '$defs': {},
         '$root': f'#/$defs/{schema.__name__}'
