@@ -100,12 +100,16 @@ class DictAble(_BaseDictAble):
     @classmethod
     def get_fields(cls) -> Dict[str, Field]:
         fields = {}
-        for attr in inspect.getmembers(cls):
-            if isinstance(attr[1], Field):
-                fields[attr[0]] = attr[1]
+        dictable_fields = {k: v for k, v in dict(vars(cls)).items() if isinstance(v, Field)}
         for name, th in get_type_hints(cls).items():
-            if name not in fields:
+            if name in dictable_fields:
+                fields[name] = dictable_fields[name]
+            else:
                 fields[name] = cls.__get_field_by_type_hint(th)
+
+        for attr in inspect.getmembers(cls):
+            if attr[0] not in fields and isinstance(attr[1], Field):
+                fields[attr[0]] = attr[1]
         return fields
 
     @classmethod
