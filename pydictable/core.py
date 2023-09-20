@@ -106,7 +106,17 @@ class DictAble(_BaseDictAble):
         for name, th in get_type_hints(cls).items():
             if name not in fields:
                 fields[name] = cls.__get_field_by_type_hint(th)
-        return fields
+
+        ordered_fields = {}
+        for name in dict(vars(cls)).keys():
+            if name in fields:
+                ordered_fields[name] = fields[name]
+        for k, v in fields.items():
+            if k not in ordered_fields:
+                ordered_fields[k] = v
+
+        assert set(fields.keys()) == set(ordered_fields.keys())
+        return ordered_fields
 
     @classmethod
     def get_field_key(cls, obj_attr: str):

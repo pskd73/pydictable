@@ -995,3 +995,73 @@ class TestCore(TestCase):
         self.assertEqual(transaction.amount, 0.0)
         self.assertEqual(transaction.description, '')
         self.assertEqual(transaction.is_fraud, False)
+
+    def test_attribute_ordering(self):
+        class TestSchema(DictAble):
+            delta: str = StrField()
+            charlie: str = StrField()
+            alpha: int = IntField()
+            beta: float = FloatField()
+
+        obj = TestSchema(dict={
+            'delta': 'four',
+            'charlie': 'one',
+            'alpha': 10,
+            'beta': 5.3
+        })
+        self.assertEqual(list(obj.to_dict().keys()), ['delta', 'charlie', 'alpha', 'beta'])
+
+        class SchemaWithoutTypeHints(DictAble):
+            delta = StrField()
+            charlie = StrField()
+            alpha = IntField()
+            beta = FloatField()
+
+        obj = SchemaWithoutTypeHints(dict={
+            'delta': 'four',
+            'charlie': 'one',
+            'alpha': 10,
+            'beta': 5.3
+        })
+        self.assertEqual(list(obj.to_dict().keys()), ['delta', 'charlie', 'alpha', 'beta'])
+
+        class Child(DictAble):
+            name: str = StrField()
+            age: int = IntField()
+
+        class Parent(DictAble):
+            delta: str = StrField()
+            charlie: str = StrField()
+            alpha: int = IntField()
+            beta: Child = ObjectField(Child, )
+
+        obj = Parent(dict={
+            'delta': 'four',
+            'charlie': 'one',
+            'alpha': 10,
+            'beta': {
+                'name': 'foo',
+                'age': 10
+            }
+        })
+        self.assertEqual(list(obj.to_dict().keys()), ['delta', 'charlie', 'alpha', 'beta'])
+        self.assertEqual(list(obj.beta.to_dict().keys()), ['name', 'age'])
+
+        class AgeField(IntField):
+            def validate_dict(self, field_name: str, v):
+                super().validate_dict(field_name, v)
+                assert v > 0
+
+        class SchemaWithCustomField(DictAble):
+            delta: str = StrField()
+            charlie: str = StrField()
+            alpha: int = IntField()
+            beta: AgeField = AgeField()
+
+        obj = SchemaWithCustomField(dict={
+            'delta': 'four',
+            'charlie': 'one',
+            'alpha': 10,
+            'beta': 10
+        })
+        self.assertEqual(list(obj.to_dict().keys()), ['delta', 'charlie', 'alpha', 'beta'])
