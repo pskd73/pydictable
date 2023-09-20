@@ -108,9 +108,9 @@ class DictAble(_BaseDictAble):
                 fields[name] = cls.__get_field_by_type_hint(th)
 
         ordered_fields = {}
-        for name, value in dict(vars(cls)).items():
-            if isinstance(value, Field):
-                ordered_fields[name] = value
+        for name in dict(vars(cls)).keys():
+            if name in fields:
+                ordered_fields[name] = fields[name]
         for k, v in fields.items():
             if k not in ordered_fields:
                 ordered_fields[k] = v
