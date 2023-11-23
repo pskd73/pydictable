@@ -40,6 +40,10 @@ class DictAble(_BaseDictAble):
             raise ReferenceError('Use kwargs to init DictAble')
         self.__set_defaults()
         self.__validate()
+        try:
+            self.validate()
+        except AssertionError as e:
+            raise DataValidationError('.', f'Validation failed with error: {str(e)}')
 
     @classmethod
     def __get_field_type_by_type_hint(cls, type_hint) -> Type[Field]:
@@ -191,6 +195,9 @@ class DictAble(_BaseDictAble):
         for attr, field in cls.get_fields().items():
             d[cls.get_field_key(attr)] = field.spec()
         return d
+
+    def validate(self):
+        pass
 
 
 def partial(base_dictable: Type[DictAble]) -> Type[DictAble]:

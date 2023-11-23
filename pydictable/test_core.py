@@ -1065,3 +1065,25 @@ class TestCore(TestCase):
             'beta': 10
         })
         self.assertEqual(list(obj.to_dict().keys()), ['delta', 'charlie', 'alpha', 'beta'])
+
+    def test_object_level_validation(self):
+        class DateRange(DictAble):
+            start_date = DatetimeField(required=True)
+            end_date = DatetimeField(required=True)
+
+            def validate(self):
+                assert self.start_date < self.end_date, 'start_date should be lesser than end_date'
+
+        self.assertRaisesRegex(DataValidationError,
+                               'Validation failed with error: start_date should be lesser than end_date', DateRange,
+                               dict={'start_date': 500000, 'end_date': 400000})
+
+        class Person(DictAble):
+            first_name: str = StrField(required=True)
+            last_name: str = StrField(required=True)
+
+            def validate(self):
+                assert len(self.first_name + self.last_name) > 2
+
+        self.assertRaisesRegex(DataValidationError, 'Validation failed with error: ', Person,
+                               dict={'first_name': 'F', 'last_name': 'B'})
