@@ -1,6 +1,5 @@
 from unittest import TestCase
-
-from pydictable import DictField, StrField, DataValidationError, DictAble, ObjectField, UnionField
+from pydictable import DictField, StrField, DataValidationError, DictAble, ObjectField, UnionField, ListField
 
 
 class TestField(TestCase):
@@ -59,3 +58,28 @@ class TestField(TestCase):
 
         r = Rule(dict={'expression': {'expression': 'nested'}})
         self.assertEqual(r.expression.expression, 'nested')
+
+    def test_list_field(self):
+        class MyList(list):
+            pass
+
+        class MyListField(ListField):
+            def validate_dict(self, field_name: str, v):
+                super(MyListField, self).validate_dict(field_name, v)
+                assert type(v) == list
+
+            def validate(self, field_name: str, v):
+                super(MyListField, self).validate(field_name, v)
+                assert type(v) == list
+
+        my_list = MyList(['A', 'B'])
+
+        field = MyListField(StrField())
+        self.assertRaises(AssertionError, lambda: field.validate_dict('x', my_list))
+        self.assertRaises(AssertionError, lambda: field.validate('x', my_list))
+
+        field = ListField(StrField())
+        field.validate_dict('x', my_list)
+        field.validate('x', my_list)
+        field.validate_dict('x', list(['A', 'B']))
+        field.validate('x', list(['A', 'B']))
