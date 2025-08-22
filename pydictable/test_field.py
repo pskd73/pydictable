@@ -1,6 +1,5 @@
 from unittest import TestCase
 from pydictable import DictField, StrField, DataValidationError, DictAble, ObjectField, UnionField, ListField
-from typing import List
 
 
 class TestField(TestCase):
