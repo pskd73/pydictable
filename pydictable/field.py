@@ -120,7 +120,7 @@ class ListField(Field):
         return [self.obj_type.to_dict(e, skip_optional) for e in v]
 
     def validate_dict(self, field_name: str, v):
-        assert type(v) == list
+        assert isinstance(v, list)
         for i, _val in enumerate(v):
             try:
                 self.obj_type.validate_dict(field_name, _val)
@@ -128,7 +128,7 @@ class ListField(Field):
                 raise DataValidationError(f'[{i}]', str(e))
 
     def validate(self, field_name: str, v):
-        assert type(v) == list
+        assert isinstance(v, list)
         [self.obj_type.validate(field_name, x) for x in v]
 
     def of(self):
