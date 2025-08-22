@@ -81,3 +81,5 @@ class TestField(TestCase):
         field = ListField(StrField())
         field.validate_dict('x', my_list)
         field.validate('x', my_list)
+        field.validate_dict('x', list(['A', 'B']))
+        field.validate('x', list(['A', 'B']))
