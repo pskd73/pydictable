@@ -16,6 +16,7 @@ class Field:
         self.key = key
         self.default = default
         self.default_factory = default_factory
+        self.config = None
 
     @abstractmethod
     def from_dict(self, v):

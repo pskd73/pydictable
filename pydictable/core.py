@@ -3,6 +3,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Dict, get_type_hints, Union, Type, Any
 
+from pydictable.config import ConfigDict
 from pydictable.field import StrField, IntField, FloatField, BoolField, ListField, UnionField, NoneField, \
     ObjectField, DataValidationError, EnumField, DatetimeField, DictField, AnyField
 from pydictable.type import _BaseDictAble, Field
@@ -25,7 +26,12 @@ TYPE_TO_FIELD = {
 }
 
 
+_IGNORE_TYPES = [ConfigDict]
+
+
 class DictAble(_BaseDictAble):
+    _config: ConfigDict = ConfigDict()
+
     def __init__(self, *args, **kwargs):
         super(DictAble, self).__init__(*args, **kwargs)
         self.__clear_default_field_values()
@@ -108,7 +114,7 @@ class DictAble(_BaseDictAble):
             if isinstance(attr[1], Field):
                 fields[attr[0]] = attr[1]
         for name, th in get_type_hints(cls).items():
-            if name not in fields:
+            if name not in fields and th not in _IGNORE_TYPES:
                 fields[name] = cls.__get_field_by_type_hint(th)
 
         ordered_fields = {}
@@ -136,6 +142,7 @@ class DictAble(_BaseDictAble):
             value = d.get(self.get_field_key(attr))
             if not field.required and value is None:
                 continue
+            field.config = self._config
             self.__setattr__(attr, field.from_dict(value))
 
     @classmethod

@@ -5,6 +5,7 @@ from datetime import datetime
 from enum import EnumMeta, Enum
 from typing import Type, List, Any
 
+from pydictable.config import merge_configs
 from pydictable.type import Field, _BaseDictAble, DefaultFactoryType
 
 
@@ -17,7 +18,11 @@ class DataValidationError(Exception):
 
 class StrField(Field):
     def from_dict(self, v: str):
-        return v
+        value = v
+        if self.config:
+            if self.config.str_strip_whitespace:
+                value = value.strip()
+        return value
 
     def to_dict(self, v, skip_optional: bool = False):
         return v
@@ -91,6 +96,8 @@ class ObjectField(Field):
         self.obj_type = obj_type
 
     def from_dict(self, v):
+        if self.config is not None:
+            self.obj_type._config = merge_configs(self.config, self.obj_type._config)
         return self.obj_type(dict=v)
 
     def to_dict(self, v, skip_optional: bool = False):
@@ -114,6 +121,7 @@ class ListField(Field):
         self.obj_type = obj_type
 
     def from_dict(self, v):
+        self.obj_type.config = self.config
         return [self.obj_type.from_dict(e) for e in v]
 
     def to_dict(self, v, skip_optional: bool = False):
@@ -231,6 +239,7 @@ class UnionField(Field):
         for field in self.fields:
             try:
                 field.validate_dict('', v)
+                field.config = self.config
                 return field.from_dict(v)
             except (AssertionError, DataValidationError):
                 pass
@@ -310,6 +319,8 @@ class DictField(Field):
         self.value_type = value_type
 
     def from_dict(self, value):
+        self.key_type.config = self.config
+        self.value_type.config = self.config
         return {self.key_type.from_dict(k): self.value_type.from_dict(v) for k, v in value.items()}
 
     def to_dict(self, value, skip_optional: bool = False):

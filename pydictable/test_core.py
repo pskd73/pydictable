@@ -5,6 +5,8 @@ from enum import Enum
 from time import sleep
 from typing import List, Dict, Optional, Union, Any
 from unittest import TestCase
+
+from pydictable import ConfigDict
 from pydictable.core import DictAble, partial
 from pydictable.field import IntField, StrField, ListField, ObjectField, DatetimeField, CustomField, MultiTypeField, \
     EnumField, DictField, DictValueField, UnionField, DataValidationError, RegexField, RangeIntField, RangeFloatField, \
@@ -1087,3 +1089,282 @@ class TestCore(TestCase):
 
         self.assertRaisesRegex(DataValidationError, 'Validation failed with error: ', Person,
                                dict={'first_name': 'F', 'last_name': 'B'})
+
+    def test_strip_string_with_root_true(self):
+        class Education(DictAble):
+            # default config
+            highest_qualification: str = StrField(required=True)
+
+        class Address(DictAble):
+            # custom config with False
+            _config = ConfigDict(
+                str_strip_whitespace=False
+            )
+            city = StrField(required=True)
+            state = StrField(required=True)
+
+        class WorkAddress(DictAble):
+            # custom config with True
+            _config = ConfigDict(
+                str_strip_whitespace=True
+            )
+            city = StrField(required=True)
+            state = StrField(required=True)
+
+        class Friend(DictAble):
+            # default config
+            name: str = StrField(required=True)
+
+        class Relative(DictAble):
+            # custom config with False
+            _config = ConfigDict(
+                str_strip_whitespace=False
+            )
+            name: str = StrField(required=True)
+
+        class Parent(DictAble):
+            # custom config with True
+            _config = ConfigDict(
+                str_strip_whitespace=True
+            )
+            name: str = StrField(required=True)
+
+        class Person(DictAble):
+            _config = ConfigDict(
+                str_strip_whitespace=True
+            )
+            first_name: str = StrField(required=True)
+            last_name: str = StrField(required=True)
+            age: int = IntField(required=True)
+
+            tags: list[str] = ListField(StrField(required=True), required=True)
+
+            relatives: list[Relative] = ListField(ObjectField(Relative), required=True)
+            friends: list[Friend] = ListField(ObjectField(Friend), required=True)
+            parents: list[Parent] = ListField(ObjectField(Parent), required=True)
+
+            education: Education = ObjectField(Education, required=True)
+            address: Address = ObjectField(Address, required=True)
+            work_address: WorkAddress = ObjectField(WorkAddress, required=True)
+
+            data_dump: dict = DictField(key_type=StrField(), value_type=StrField())
+
+        p = Person(dict={
+            'first_name': ' Ramesh ',
+            'last_name': ' Suresh',
+            'age': 30,
+            'tags': ['FOO ', ' BAR', ' LOREM IPSUM '],
+            'relatives': [{'name': '   Naresh  '}],
+            'friends': [{'name': ' Bhavesh '}],
+            'parents': [{'name': ' Madhav '}, {'name': ' Leela '}],
+            'education': {
+                'highest_qualification': ' post graduate '
+            },
+            'address': {
+                'city': ' Bangalore ',
+                'state': 'Karnataka'
+            },
+            'work_address': {
+                'city': ' Pune ',
+                'state': 'Maharashtra'
+            },
+            'data_dump': {
+                'key1  ': ' value1 ',
+                'key two': ' value2'
+            },
+        })
+        self.assertEqual(p.to_dict(), {
+            'first_name': 'Ramesh',
+            'last_name': 'Suresh',
+            'age': 30,
+            'tags': ['FOO', 'BAR', 'LOREM IPSUM'],
+            'relatives': [{'name': '   Naresh  '}],
+            'friends': [{'name': 'Bhavesh'}],
+            'parents': [{'name': 'Madhav'}, {'name': 'Leela'}],
+            'education': {
+                'highest_qualification': 'post graduate'
+            },
+            'address': {
+                'city': ' Bangalore ',
+                'state': 'Karnataka'
+            },
+            'work_address': {
+                'city': 'Pune',
+                'state': 'Maharashtra'
+            },
+            'data_dump': {
+                'key1': 'value1',
+                'key two': 'value2'
+            },
+        })
+
+    def test_strip_string_with_root_false(self):
+        class Education(DictAble):
+            # default config
+            highest_qualification: str = StrField(required=True)
+
+        class Address(DictAble):
+            # custom config with False
+            _config = ConfigDict(
+                str_strip_whitespace=False
+            )
+            city = StrField(required=True)
+            state = StrField(required=True)
+
+        class WorkAddress(DictAble):
+            # custom config with True
+            _config = ConfigDict(
+                str_strip_whitespace=True
+            )
+            city = StrField(required=True)
+            state = StrField(required=True)
+
+        class Friend(DictAble):
+            # default config
+            name: str = StrField(required=True)
+
+        class Relative(DictAble):
+            # custom config with False
+            _config = ConfigDict(
+                str_strip_whitespace=False
+            )
+            name: str = StrField(required=True)
+
+        class Parent(DictAble):
+            # custom config with True
+            _config = ConfigDict(
+                str_strip_whitespace=True
+            )
+            name: str = StrField(required=True)
+
+        class Person(DictAble):
+            _config = ConfigDict(
+                str_strip_whitespace=False
+            )
+            first_name: str = StrField(required=True)
+            last_name: str = StrField(required=True)
+            age: int = IntField(required=True)
+
+            tags: list[str] = ListField(StrField(required=True), required=True)
+
+            relatives: list[Relative] = ListField(ObjectField(Relative), required=True)
+            friends: list[Friend] = ListField(ObjectField(Friend), required=True)
+            parents: list[Parent] = ListField(ObjectField(Parent), required=True)
+
+            education: Education = ObjectField(Education, required=True)
+            address: Address = ObjectField(Address, required=True)
+            work_address: WorkAddress = ObjectField(WorkAddress, required=True)
+
+            data_dump: dict = DictField(key_type=StrField(), value_type=StrField())
+
+        p = Person(dict={
+            'first_name': ' Ramesh ',
+            'last_name': ' Suresh',
+            'age': 30,
+            'tags': ['FOO ', ' BAR', ' LOREM IPSUM '],
+            'relatives': [{'name': '   Naresh  '}],
+            'friends': [{'name': ' Bhavesh '}],
+            'parents': [{'name': ' Madhav '}, {'name': ' Leela '}],
+            'education': {
+                'highest_qualification': ' post graduate '
+            },
+            'address': {
+                'city': ' Bangalore ',
+                'state': 'Karnataka'
+            },
+            'work_address': {
+                'city': ' Pune ',
+                'state': 'Maharashtra'
+            },
+            'data_dump': {
+                'key1  ': ' value1 ',
+                'key two': ' value2'
+            },
+        })
+        self.assertEqual(p.to_dict(), {
+            'first_name': ' Ramesh ',
+            'last_name': ' Suresh',
+            'age': 30,
+            'tags': ['FOO ', ' BAR', ' LOREM IPSUM '],
+            'relatives': [{'name': '   Naresh  '}],
+            'friends': [{'name': ' Bhavesh '}],
+            'parents': [{'name': 'Madhav'}, {'name': 'Leela'}],
+            'education': {
+                'highest_qualification': ' post graduate '
+            },
+            'address': {
+                'city': ' Bangalore ',
+                'state': 'Karnataka'
+            },
+            'work_address': {
+                'city': 'Pune',
+                'state': 'Maharashtra'
+            },
+            'data_dump': {
+                'key1  ': ' value1 ',
+                'key two': ' value2'
+            },
+        })
+
+    def test_custom_string_field_for_strip(self):
+        class CustomStringField(StrField):
+            def from_dict(self, v: str):
+                v = super().from_dict(v)
+                return v.split('-')[0]
+
+        class Item(DictAble):
+            _config = ConfigDict(
+                str_strip_whitespace=True
+            )
+            first_tag = CustomStringField(required=True)
+
+        item = Item(dict={'first_tag': ' FOO-BAR-TEST '})
+        self.assertEqual(item.to_dict(), {'first_tag': 'FOO'})
+
+    def test_test_custom_config_with_union_field(self):
+        class Relative(DictAble):
+            name: str = StrField(required=True)
+            relation: str = StrField(required=True)
+
+        class Friend(DictAble):
+            name: str = StrField(required=True)
+            known_since: int = IntField(required=True)
+
+        class Parent(DictAble):
+            _config = ConfigDict(str_strip_whitespace=False)
+            name: str = StrField(required=True)
+            age: int = IntField(required=True)
+
+        class Person(DictAble):
+            _config = ConfigDict(str_strip_whitespace=True)
+            name: str = StrField(required=True)
+            connections = ListField(
+                UnionField([ObjectField(Relative), ObjectField(Friend), ObjectField(Parent)], required=True),
+                required=True)
+
+        p1 = Person(dict={
+            'name': ' Bhargav ',
+            'connections': [
+                {
+                    'name': '  Suresh  ',
+                    'known_since': 2014
+                },
+                {
+                    'name': ' Umesh ',
+                    'age': 60
+                }
+            ]
+        })
+        self.assertEqual(p1.to_dict(), {
+            'name': 'Bhargav',
+            'connections': [
+                {
+                    'name': 'Suresh',
+                    'known_since': 2014
+                },
+                {
+                    'name': ' Umesh ',
+                    'age': 60
+                }
+            ]
+        })
